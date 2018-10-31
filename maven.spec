@@ -1,7 +1,7 @@
 %{?_javapackages_macros:%_javapackages_macros}
 Name:           maven
 Version:        3.2.5
-Release:        1.1
+Release:        1.2
 Summary:        Java project management and project comprehension tool
 Group:		Development/Java
 
