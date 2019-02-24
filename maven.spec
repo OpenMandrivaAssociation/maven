@@ -1,13 +1,22 @@
+# Bootstrap mode "cheats" by using the prebuilt jar files from upstream.
+# There's not much of a way around it, given Maven requires Maven to
+# build these days.
+%bcond_without bootstrap
+
 %{?_javapackages_macros:%_javapackages_macros}
 Name:           maven
-Version:        3.2.5
-Release:        1.2
+Version:        3.6.0
+Release:        1
 Summary:        Java project management and project comprehension tool
 Group:		Development/Java
 
 License:        ASL 2.0
 URL:            http://maven.apache.org/
+%if %{with bootstrap}
+Source0:	https://www-us.apache.org/dist/maven/maven-3/%{version}/binaries/apache-maven-%{version}-bin.tar.gz
+%else
 Source0:        http://archive.apache.org/dist/%{name}/%{name}-3/%{version}/source/apache-%{name}-%{version}-src.tar.gz
+%endif
 Source1:        maven-bash-completion
 Source2:        mvn.1
 
@@ -18,12 +27,8 @@ Patch0005:	0005-Use-generics-in-modello-generated-code.patch
 
 BuildArch:      noarch
 
-# If XMvn is part of the same RPM transaction then it should be
-# installed first to avoid triggering rhbz#1014355.
-Requires(pre):  xmvn
-
+%if ! %{with bootstrap}
 BuildRequires:  maven-local
-
 BuildRequires:  aether-api >= 1:0
 BuildRequires:  aether-connector-basic >= 1:0
 BuildRequires:  aether-impl >= 1:0
@@ -116,13 +121,15 @@ Requires:       slf4j
 # for noarch->arch change
 Obsoletes:      %{name} < 0:%{version}-%{release}
 
-# maven2 bin package no longer exists.
-Obsoletes:      maven2 < 2.2.1-99
-Provides:       maven2 = %{version}-%{release}
-
 # Temporary fix for broken sisu
 Requires:       cdi-api
 BuildRequires:  cdi-api
+
+# If XMvn is part of the same RPM transaction then it should be
+# installed first to avoid triggering rhbz#1014355.
+# Not done in bootstrap mode because we may not have xmvn yet.
+Requires(pre):  xmvn
+%endif
 
 %description
 Maven is a software project management and comprehension tool. Based on the
@@ -137,6 +144,56 @@ Summary:        API documentation for %{name}
 %{summary}.
 
 %prep
+%if %{with bootstrap}
+%setup -n apache-maven-%{version}
+
+%build
+
+%install
+install -d -m 755 %{buildroot}%{_datadir}/%{name}/bin
+install -d -m 755 %{buildroot}%{_datadir}/%{name}/conf
+install -d -m 755 %{buildroot}%{_datadir}/%{name}/boot
+install -d -m 755 %{buildroot}%{_datadir}/%{name}/lib/ext
+install -d -m 755 %{buildroot}%{_bindir}
+install -d -m 755 %{buildroot}%{_sysconfdir}/%{name}
+install -d -m 755 %{buildroot}%{_datadir}/bash-completion/completions
+install -d -m 755 %{buildroot}%{_mandir}/man1
+
+install -p -m 755 %{SOURCE200} %{buildroot}%{_bindir}/mvn
+install -p -m 644 %{SOURCE2} %{buildroot}%{_mandir}/man1
+install -p -m 644 %{SOURCE1} %{buildroot}%{_datadir}/bash-completion/completions/%{name}
+mv bin/m2.conf %{buildroot}%{_sysconfdir}
+ln -sf %{_sysconfdir}/m2.conf %{buildroot}%{_datadir}/%{name}/bin/m2.conf
+mv conf/settings.xml %{buildroot}%{_sysconfdir}/%{name}
+ln -sf %{_sysconfdir}/%{name}/settings.xml %{buildroot}%{_datadir}/%{name}/conf/settings.xml
+mv conf/logging %{buildroot}%{_sysconfdir}/%{name}
+ln -sf %{_sysconfdir}/%{name}/logging %{buildroot}%{_datadir}/%{name}/conf
+
+cp -a bin/* %{buildroot}%{_datadir}/%{name}/bin
+cp -a boot %{buildroot}%{_datadir}/%{name}
+
+cp -a lib/*.jar %{buildroot}%{_datadir}/%{name}/lib/
+
+mkdir -p %{buildroot}%{_javadir}/%{name}
+for i in %{buildroot}%{_datadir}/%{name}/lib/maven*.jar; do
+	FN="$(basename $i .jar |rev |cut -d- -f2- |rev)"
+	ln -s `echo $i |sed -e 's,^%{buildroot},,'` %{buildroot}%{_javadir}/%{name}/$FN.jar
+done
+
+%files
+%doc LICENSE NOTICE README.txt
+%{_datadir}/%{name}
+%{_bindir}/mvn
+%dir %{_javadir}/%{name}
+%{_javadir}/%{name}/*.jar
+%dir %{_sysconfdir}/%{name}
+%dir %{_sysconfdir}/%{name}/logging
+%config(noreplace) %{_sysconfdir}/m2.conf
+%config(noreplace) %{_sysconfdir}/%{name}/settings.xml
+%config(noreplace) %{_sysconfdir}/%{name}/logging/simplelogger.properties
+%{_datadir}/bash-completion/completions/%{name}
+%{_mandir}/man1/mvn.1*
+%else
 %setup -q -n apache-%{name}-%{version}%{?ver_add}
 %patch0005 -p1
 
@@ -246,7 +303,6 @@ ln -sf $(build-classpath plexus/classworlds) \
 	objectweb-asm/asm
 )
 
-
 %files -f .mfiles
 %doc LICENSE NOTICE README.md
 %{_datadir}/%{name}
@@ -258,297 +314,8 @@ ln -sf $(build-classpath plexus/classworlds) \
 %config(noreplace) %{_sysconfdir}/%{name}/settings.xml
 %config(noreplace) %{_sysconfdir}/%{name}/logging/simplelogger.properties
 %{_datadir}/bash-completion/completions/%{name}
-%{_mandir}/man1/mvn.1.gz
+%{_mandir}/man1/mvn.1*
 
 %files javadoc -f .mfiles-javadoc
 %doc LICENSE NOTICE
-
-
-%changelog
-* Wed Nov 13 2013 Mikolaj Izdebski <mizdebsk@redhat.com> - 3.1.1-14
-- Update to Sisu 0.1.0 and Guice 3.1.6
-
-* Fri Nov  8 2013 Mikolaj Izdebski <mizdebsk@redhat.com> - 3.1.1-13
-- Add wagon-http-shared4 to plexus.core
-
-* Tue Nov  5 2013 Mikolaj Izdebski <mizdebsk@redhat.com> - 3.1.1-6
-- Update F20 to upstream bugfix release 3.1.1
-
-* Tue Nov  5 2013 Mikolaj Izdebski <mizdebsk@redhat.com> - 3.1.1-5
-- Add OrderWithRequires: xmvn
-- Related: rhbz#1014355
-
-* Tue Oct 29 2013 Mikolaj Izdebski <mizdebsk@redhat.com> - 3.1.1-4
-- Add explicit requires
-
-* Wed Oct 23 2013 Mikolaj Izdebski <mizdebsk@redhat.com> - 3.1.1-3
-- Rebuild to regenerate broken POM files
-- Related: rhbz#1021484
-
-* Mon Oct 21 2013 Mikolaj Izdebski <mizdebsk@redhat.com> - 3.1.0-10
-- Add dependencies of wagon-http-shaded to plexus.core
-- Remove objectweb-asm from plexus.core
-- Add explicit requires
-- Resolves: rhbz#1023872
-
-* Mon Oct  7 2013 Mikolaj Izdebski <mizdebsk@redhat.com> - 3.1.1-1
-- Update to upstream version 3.1.1
-- Remove patch for MNG-5503 (included upstream)
-
-* Mon Sep 23 2013 Mikolaj Izdebski <mizdebsk@redhat.com> - 3.1.0-9
-- Synchronize JAR list in lib/ with upstream release
-- Remove test dependencies on aopalliance and cglib
-
-* Thu Aug 29 2013 Mikolaj Izdebski <mizdebsk@redhat.com> - 3.1.0-8
-- Migrate from easymock 1 to easymock 3
-- Resolves: rhbz#1002432
-
-* Fri Aug 23 2013 Mikolaj Izdebski <mizdebsk@redhat.com> - 3.1.0-7
-- Add patch for MNG-5503
-- Resolves: rhbz#991454
-
-* Mon Aug 12 2013 Mikolaj Izdebski <mizdebsk@redhat.com> - 3.1.0-6
-- Update Aether to 0.9.0.M3
-
-* Mon Aug 12 2013 Mikolaj Izdebski <mizdebsk@redhat.com> - 3.1.0-5
-- Prepare for update to Aether 0.9.0.M3
-
-* Fri Aug  9 2013 Mikolaj Izdebski <mizdebsk@redhat.com> - 3.1.0-4
-- Remove workaround for incompatible plexus-utils
-
-* Sat Aug 03 2013 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 3.1.0-3
-- Rebuilt for https://fedoraproject.org/wiki/Fedora_20_Mass_Rebuild
-
-* Tue Jul 23 2013 Mikolaj Izdebski <mizdebsk@redhat.com> - 3.1.0-2
-- Install simplelogger.properties into %{_sysconfdir}
-
-* Tue Jul 23 2013 Mikolaj Izdebski <mizdebsk@redhat.com> - 3.1.0-1
-- Update to upstream version 3.1.0
-
-* Fri Jul 19 2013 Mikolaj Izdebski <mizdebsk@redhat.com> - 3.0.5-8
-- Use sonatype-aether symlinks
-
-* Mon May 20 2013 Mikolaj Izdebski <mizdebsk@redhat.com> - 3.0.5-7
-- Move bash-completion files to primary location
-- Resolves: rhbz#918000
-
-* Fri May 10 2013 Mikolaj Izdebski <mizdebsk@redhat.com> - 3.0.5-6
-- Remove unneeded BR: async-http-client
-- Add Requires on java-devel
-
-* Thu May  2 2013 Mikolaj Izdebski <mizdebsk@redhat.com> - 3.0.5-5
-- BR proper aether subpackages
-- Resolves: rhbz#958160
-
-* Fri Apr 26 2013 Mikolaj Izdebski <mizdebsk@redhat.com> - 3.0.5-4
-- Add missing BuildRequires
-
-* Tue Mar 12 2013 Mikolaj Izdebski <mizdebsk@redhat.com> - 3.0.5-3
-- Make ext/ a subdirectory of lib/
-
-* Tue Mar 12 2013 Mikolaj Izdebski <mizdebsk@redhat.com> - 3.0.5-2
-- In maven-script don't override M2_HOME if already set
-
-* Fri Mar  1 2013 Mikolaj Izdebski <mizdebsk@redhat.com> - 3.0.5-1
-- Update to upstream version 3.0.5
-- Move settings.xml to /etc
-
-* Mon Feb 11 2013 Mikolaj Izdebski <mizdebsk@redhat.com> - 3.0.4-32
-- Remove xerces-j2 from plexus.core realm
-- Resolves: rhbz#784816
-
-* Thu Feb  7 2013 Mikolaj Izdebski <mizdebsk@redhat.com> - 3.0.4-31
-- Migrate BR from sisu to sisu subpackages
-
-* Wed Feb  6 2013 Mikolaj Izdebski <mizdebsk@redhat.com> - 3.0.4-30
-- Remove unneeded R: maven-local
-
-* Fri Jan 25 2013 Mikolaj Izdebski <mizdebsk@redhat.com> - 3.0.4-29
-- Drop support for local mode
-- Build with xmvn, rely on auto-requires
-
-* Wed Jan 23 2013 Mikolaj Izdebski <mizdebsk@redhat.com> - 3.0.4-28
-- Move mvn-local and mvn-rpmbuild out of %_bindir
-
-* Tue Nov 27 2012 Mikolaj Izdebski <mizdebsk@redhat.com> - 3.0.4-27
-- Move some parts to maven-local package
-
-* Thu Nov 22 2012 Mikolaj Izdebski <mizdebsk@redhat.com> - 3.0.4-26
-- Force source >= 1.5 and target >= source
-
-* Mon Nov 19 2012 Mikolaj Izdebski <mizdebsk@redhat.com> - 3.0.4-25
-- Fix license tag
-
-* Thu Nov 15 2012 Mikolaj Izdebski <mizdebsk@redhat.com> - 3.0.4-24
-- Install NOTICE file with javadoc package
-
-* Tue Nov 13 2012 Mikolaj Izdebski <mizdebsk@redhat.com> - 3.0.4-23
-- Temporarly require Plexus POMs as a workaround
-
-* Mon Nov 12 2012 Mikolaj Izdebski <mizdebsk@redhat.com> - 3.0.4-22
-- Drop dependency on maven2-common-poms
-- Drop support for /etc/maven/fragments
-
-* Thu Nov 08 2012 Stanislav Ochotnicky <sochotnicky@redhat.com> - 3.0.4-21
-- Add support for custom jar/pom/fragment directories
-
-* Thu Nov  8 2012 Mikolaj Izdebski <mizdebsk@redhat.com> - 3.0.4-20
-- Remove all slf4j providers except nop from maven realm
-
-* Thu Nov  1 2012 Mikolaj Izdebski <mizdebsk@redhat.com> - 3.0.4-19
-- Add aopalliance and cglib to maven-model-builder test dependencies
-
-* Thu Nov  1 2012 Mikolaj Izdebski <mizdebsk@redhat.com> - 3.0.4-18
-- Add objectweb-asm to classpath
-
-* Thu Nov  1 2012 Mikolaj Izdebski <mizdebsk@redhat.com> - 3.0.4-17
-- Add aopalliance, cglib, slf4j to classpath
-
-* Wed Oct 31 2012 Mikolaj Izdebski <mizdebsk@redhat.com> - 3.0.4-16
-- Don't echo JAVA_HOME in maven-script
-- Add bash completion for -Dproject.build.sourceEncoding
-
-* Mon Oct 29 2012 Mikolaj Izdebski <mizdebsk@redhat.com> - 3.0.4-15
-- Add a few bash completion goals
-
-* Wed Oct 24 2012 Stanislav Ochotnicky <sochotnicky@redhat.com> - 3.0.4-14
-- Enable test skipping patch only for local mode (#869399)
-
-* Fri Oct 19 2012 Stanislav Ochotnicky <sochotnicky@redhat.com> - 3.0.4-13
-- Make sure we look for requested pom file and not resolved
-
-* Thu Oct 18 2012 Stanislav Ochotnicky <sochotnicky@redhat.com> - 3.0.4-12
-- Look into maven.repo.local first to handle corner-case packages (#865599)
-- Finish handling of compatibility packages
-- Disable animal-sniffer temporarily in Fedora as well
-
-* Mon Aug 27 2012 Mikolaj Izdebski <mizdebsk@redhat.com> - 3.0.4-11
-- Disable animal-sniffer on RHEL
-
-* Wed Jul 25 2012 Stanislav Ochotnicky <sochotnicky@redhat.com> - 3.0.4-10
-- Fix exit code of mvn-rpmbuild outside of mock
-- Fix bug in compatibility jar handling
-
-* Mon Jul 23 2012 Mikolaj Izdebski <mizdebsk@redhat.com> - 3.0.4-9
-- Run redundant dependency checks only in mock
-
-* Tue Jul 17 2012 Mikolaj Izdebski <mizdebsk@redhat.com> - 3.0.4-8
-- Add manual page
-
-* Mon Jun 11 2012 Mikolaj Izdebski <mizdebsk@redhat.com> - 3.0.4-7
-- Implement redundant dependency checks
-
-* Thu May 24 2012 Krzysztof Daniel <kdaniel@redhat.com> 3.0.4-6
-- Bug 824789 -Use the version if it is possible.
-
-* Mon May 14 2012 Stanislav Ochotnicky <sochotnicky@redhat.com> - 3.0.4-5
-- Use Obsoletes instead of Conflicts
-
-* Mon May 14 2012 Stanislav Ochotnicky <sochotnicky@redhat.com> - 3.0.4-4
-- Obsolete and provide maven2
-
-* Thu Mar 29 2012 Stanislav Ochotnicky <sochotnicky@redhat.com> - 3.0.4-3
-- Make package noarch again to simplify bootstrapping
-
-* Thu Feb  9 2012 Stanislav Ochotnicky <sochotnicky@redhat.com> - 3.0.4-2
-- Make javadoc noarch
-- Make compilation source level 1.5
-- Fix borked tarball unpacking (reason unknown)
-
-* Tue Jan 31 2012 Stanislav Ochotnicky <sochotnicky@redhat.com> - 3.0.4-1
-- Update to latest upstream version
-
-* Fri Jan 13 2012 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 3.0.3-17
-- Rebuilt for https://fedoraproject.org/wiki/Fedora_17_Mass_Rebuild
-
-* Tue Dec 13 2011 Stanislav Ochotnicky <sochotnicky@redhat.com> - 3.0.3-16
-- Add maven2-common-poms to Requires
-
-* Tue Oct 11 2011 Stanislav Ochotnicky <sochotnicky@redhat.com> - 3.0.3-15
-- Provide mvn script now instead of maven2
-- Conflict with older versions of maven2
-
-* Tue Aug 30 2011 Stanislav Ochotnicky <sochotnicky@redhat.com> - 3.0.3-14
-- Fix test scope skipping
-
-* Mon Aug 22 2011 Stanislav Ochotnicky <sochotnicky@redhat.com> - 3.0.3-13
-- Remove unnecessary deps causing problems from lib/
-- Add utf-8 source encoding patch
-
-* Thu Jul 28 2011 Stanislav Ochotnicky <sochotnicky@redhat.com> - 3.0.3-12
-- Disable debug package creation
-
-* Thu Jul 28 2011 Stanislav Ochotnicky <sochotnicky@redhat.com> - 3.0.3-11
-- Change to arch specific since we are using _libdir for _jnidir
-
-* Tue Jul 26 2011 Stanislav Ochotnicky <sochotnicky@redhat.com> - 3.0.3-10
-- Add bash completion (#706856)
-
-* Mon Jul  4 2011 Stanislav Ochotnicky <sochotnicky@redhat.com> - 3.0.3-9
-- Add resolving from jnidir and java-jni
-
-* Thu Jun 23 2011 Stanislav Ochotnicky <sochotnicky@redhat.com> - 3.0.3-8
-- Add maven-parent to BR/R
-
-* Wed Jun 22 2011 Stanislav Ochotnicky <sochotnicky@redhat.com> - 3.0.3-7
-- Process fragments in alphabetical order
-
-* Tue Jun 21 2011 Stanislav Ochotnicky <sochotnicky@redhat.com> - 3.0.3-6
-- Fix handling of fallback default_poms
-- Add empty-dep into maven package to not require maven2 version
-
-* Fri Jun 10 2011 Stanislav Ochotnicky <sochotnicky@redhat.com> - 3.0.3-5
-- Process fragments directly instead of maven2-depmap.xml
-- Expect fragments in /usr/share/maven-fragments
-- Resolve poms also from /usr/share/maven-poms
-
-* Mon Jun  6 2011 Stanislav Ochotnicky <sochotnicky@redhat.com> - 3.0.3-4
-- Add help to mvn-rpmbuild and mvn-local (rhbz#710448)
-
-* Tue May 10 2011 Stanislav Ochotnicky <sochotnicky@redhat.com> - 3.0.3-3
-- Improve and clean up depmap handling for m2/m3 repos
-
-* Mon Apr 18 2011 Stanislav Ochotnicky <sochotnicky@redhat.com> - 3.0.3-2
-- Enable MAVEN_OPTS override in scripts
-
-* Fri Mar  4 2011 Stanislav Ochotnicky <sochotnicky@redhat.com> - 3.0.3-1
-- Update to 3.0.3
-- Add ext subdirectory to lib
-
-* Tue Mar  1 2011 Stanislav Ochotnicky <sochotnicky@redhat.com> - 3.0.3-0.1.rc1
-- Update to 3.0.3rc1
-- Enable tests again
-
-* Thu Feb 10 2011 Stanislav Ochotnicky <sochotnicky@redhat.com> - 3.0.2-2
-- Added mvn-rpmbuild script to be used in spec files
-- mvn-local is now mixed mode (online with javadir priority)
-- Changed mvn.jpp to mvn.local
-
-* Fri Jan 28 2011 Stanislav Ochotnicky <sochotnicky@redhat.com> - 3.0.2-1
-- Update to latest version (3.0.2)
-- Ignore test failures temporarily
-
-* Wed Jan 12 2011 Stanislav Ochotnicky <sochotnicky@redhat.com> - 3.0-6
-- Fix bug #669034
-
-* Tue Jan 11 2011 Stanislav Ochotnicky <sochotnicky@redhat.com> - 3.0-5
-- Fix bugs #667625 #667614 and #667636
-- Install maven metadata so they are not downloaded when mvn is run
-- Rename mvn3-local to mvn-local
-- Add more comments to resolver patch
-
-* Tue Dec 21 2010 Stanislav Ochotnicky <sochotnicky@redhat.com> - 3.0-4
-- Add fedora local resolver
-- Fix quoting of arguments to mvn scripts
-- Add javadoc subpackage
-- Make jars versionless and remove unneeded clean section
-
-* Wed Dec  1 2010 Stanislav Ochotnicky <sochotnicky@redhat.com> - 3.0-3
-- Remove maven-ant-tasks jar in prep
-- Make fragment file as %%config
-
-* Tue Nov 16 2010 Stanislav Ochotnicky <sochotnicky@redhat.com> - 3.0-2
-- Added apache-commons-parent to BR after commons changes
-
-* Tue Oct 12 2010 Stanislav Ochotnicky <sochotnicky@redhat.com> - 3.0-1
-- Initial package with vanilla maven (no jpp mode yet)
+%endif

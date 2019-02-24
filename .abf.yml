@@ -1,2 +1,3 @@
 sources:
-  apache-maven-3.2.5-src.tar.gz: 9d1c873fb7ed6990a7005383926fc8db7fc59190
+  apache-maven-3.6.0-bin.tar.gz: a6bd3779ab7aef6da3b6e9b9bb80471641830827
+  apache-maven-3.6.0-src.tar.gz: 255d8057b7f014222e96137001d4f4aa05d4a7cb
