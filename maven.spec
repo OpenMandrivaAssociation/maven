@@ -5,7 +5,7 @@
 
 %{?_javapackages_macros:%_javapackages_macros}
 Name:           maven
-Version:        3.6.1
+Version:        3.6.3
 Release:        1
 Summary:        Java project management and project comprehension tool
 Group:		Development/Java
