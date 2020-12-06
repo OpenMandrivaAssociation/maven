@@ -28,7 +28,9 @@ Source2:        mvn.1
 Source3:	maven-dependencies-%{version}.tar.zst
 Source1000:	maven-package-dependencies
 %endif
-
+%if ! %{with bootstrap}
+BuildRequires:	maven
+%endif
 Patch1:		0005-Use-generics-in-modello-generated-code.patch
 
 BuildArch:      noarch
