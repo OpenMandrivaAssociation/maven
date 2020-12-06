@@ -1,2 +1,4 @@
 sources:
   apache-maven-3.6.3-bin.tar.gz: cc836dc7e64b113472df31996caaedf132969009
+  apache-maven-3.6.3-src.tar.gz: ccf441f3bf7f477301ebc80742cbda1da73c30a2
+  maven-dependencies-3.6.3.tar.zst: 7dfe96d781d8eee92d6c0f8737ce288476e0b0c5
