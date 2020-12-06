@@ -30,6 +30,7 @@ Source1000:	maven-package-dependencies
 %endif
 %if ! %{with bootstrap}
 BuildRequires:	maven
+BuildRequires:	jdk-current
 %endif
 Patch1:		0005-Use-generics-in-modello-generated-code.patch
 
@@ -51,6 +52,7 @@ Summary:        API documentation for %{name}
 %setup -n apache-maven-%{version}
 %else
 %autosetup -p1 -n apache-%{name}-%{version}%{?ver_add}
+. %{_sysconfdir}/profile.d/90java.sh
 %if %{with bootstrap2}
 cd ..
 tar xf %{S:3}
@@ -73,6 +75,7 @@ sed -i -e s:'-classpath "${M2_HOME}"/boot/plexus-classworlds-\*.jar':'-classpath
 
 %build
 %if ! %{with bootstrap}
+. %{_sysconfdir}/profile.d/90java.sh
 %if %{with bootstrap2}
 mvn -Dmaven.repo.local=$(pwd)/../repository -Dproject.build.sourceEncoding=UTF-8 compile
 mvn -Dmaven.repo.local=$(pwd)/../repository -Dproject.build.sourceEncoding=UTF-8 verify
@@ -86,6 +89,7 @@ mvn -Dproject.build.sourceEncoding=UTF-8 validate
 
 %install
 %if ! %{with bootstrap}
+. %{_sysconfdir}/profile.d/90java.sh
 %if %{without bootstrap2}
 mvn -Dmaven.repo.local=$(pwd)/../repository -Dproject.build.sourceEncoding=UTF-8 install
 %else
