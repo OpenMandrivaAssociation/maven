@@ -10,7 +10,7 @@
 
 Name:           maven
 Version:        3.6.3
-Release:        1
+Release:        2
 Summary:        Java project management and project comprehension tool
 Group:		Development/Java
 
