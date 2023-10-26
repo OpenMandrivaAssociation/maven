@@ -1,7 +1,7 @@
 discover:
   how: fmf
   url: https://src.fedoraproject.org/tests/javapackages
-  ref: f39
+  ref: f40
 prepare:
   how: install
   exclude:
