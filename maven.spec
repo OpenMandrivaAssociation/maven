@@ -7,7 +7,7 @@
 Name:           maven
 Epoch:          1
 Version:        3.9.6
-Release:        1%{?dist}
+Release:        2%{?dist}
 Summary:        Java project management and project comprehension tool
 # maven itself is Apache-2.0
 # bundled slf4j is MIT
@@ -170,6 +170,7 @@ find -name 'pom.xml' -exec sed -i 's/\r//' {} +
 %patch -P 1 -p1
 %patch -P 2 -p1
 %patch -P 3 -p1
+sed -i "s/@{maven_version_suffix}/%{?maven_version_suffix}/" apache-maven/src/bin/mvn
 
 # not really used during build, but a precaution
 find -name '*.jar' -not -path '*/test/*' -delete
@@ -261,10 +262,10 @@ ln -s %{homedir}/bin/mvnDebug.1.gz %{buildroot}%{_mandir}/man1/mvnDebug%{maven_v
 
 # JDK bindings
 install -d -m 755 %{buildroot}%{_javaconfdir}/
-echo JAVA_HOME=%{_jvmlibdir}/jre-1.8.0-openjdk >%{buildroot}%{_javaconfdir}/maven.conf-openjdk8
-echo JAVA_HOME=%{_jvmlibdir}/jre-11-openjdk >%{buildroot}%{_javaconfdir}/maven.conf-openjdk11
-echo JAVA_HOME=%{_jvmlibdir}/jre-17-openjdk >%{buildroot}%{_javaconfdir}/maven.conf-openjdk17
-echo JAVA_HOME=%{_jvmlibdir}/jre-21-openjdk >%{buildroot}%{_javaconfdir}/maven.conf-openjdk21
+echo JAVA_HOME=%{_jvmlibdir}/jre-1.8.0-openjdk >%{buildroot}%{_javaconfdir}/maven%{?maven_version_suffix}.conf-openjdk8
+echo JAVA_HOME=%{_jvmlibdir}/jre-11-openjdk >%{buildroot}%{_javaconfdir}/maven%{?maven_version_suffix}.conf-openjdk11
+echo JAVA_HOME=%{_jvmlibdir}/jre-17-openjdk >%{buildroot}%{_javaconfdir}/maven%{?maven_version_suffix}.conf-openjdk17
+echo JAVA_HOME=%{_jvmlibdir}/jre-21-openjdk >%{buildroot}%{_javaconfdir}/maven%{?maven_version_suffix}.conf-openjdk21
 
 
 %post
@@ -302,18 +303,21 @@ if [[ $1 -eq 0 ]]; then update-alternatives --remove mvn %{homedir}/bin/mvn; fi
 %endif
 
 %files openjdk8
-%config %{_javaconfdir}/maven.conf-openjdk8
+%config %{_javaconfdir}/maven%{?maven_version_suffix}.conf-openjdk8
 
 %files openjdk11
-%config %{_javaconfdir}/maven.conf-openjdk11
+%config %{_javaconfdir}/maven%{?maven_version_suffix}.conf-openjdk11
 
 %files openjdk17
-%config %{_javaconfdir}/maven.conf-openjdk17
+%config %{_javaconfdir}/maven%{?maven_version_suffix}.conf-openjdk17
 
 %files openjdk21
-%config %{_javaconfdir}/maven.conf-openjdk21
+%config %{_javaconfdir}/maven%{?maven_version_suffix}.conf-openjdk21
 
 %changelog
+* Wed Dec 13 2023 Mikolaj Izdebski <mizdebsk@redhat.com> - 1:3.9.6-2
+- Make JDK bindings work with different Maven version suffixes
+
 * Mon Dec 04 2023 Mikolaj Izdebski <mizdebsk@redhat.com> - 1:3.9.6-1
 - Update to upstream version 3.9.6
 

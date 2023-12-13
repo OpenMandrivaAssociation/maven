@@ -33,7 +33,7 @@ index a3004f917..9b118717e 100755
    fi
  
 +  if [ -z "$JAVA_HOME" ] ; then
-+    . /etc/java/maven.conf
++    . /etc/java/maven@{maven_version_suffix}.conf
 +  fi
 +
    if [ -f "$HOME/.mavenrc" ] ; then
