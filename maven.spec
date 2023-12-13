@@ -1,8 +1,8 @@
 %bcond_with bootstrap
 
 %global bundled_slf4j_version 1.7.36
-%global homedir %{_datadir}/%{name}%{?maven_version_suffix}
-%global confdir %{_sysconfdir}/%{name}%{?maven_version_suffix}
+%global homedir %{_datadir}/maven%{?maven_version_suffix}
+%global confdir %{_sysconfdir}/maven%{?maven_version_suffix}
 
 Name:           maven
 Epoch:          1
@@ -16,7 +16,7 @@ URL:            https://maven.apache.org/
 BuildArch:      noarch
 ExclusiveArch:  %{java_arches} noarch
 
-Source0:        https://archive.apache.org/dist/%{name}/%{name}-3/%{version}/source/apache-%{name}-%{version}-src.tar.gz
+Source0:        https://archive.apache.org/dist/maven/maven-3/%{version}/source/apache-maven-%{version}-src.tar.gz
 Source1:        maven-bash-completion
 Source2:        mvn.1
 
@@ -114,11 +114,11 @@ Core part of Apache Maven that can be used as a library.
 %package openjdk8
 Summary:        OpenJDK 8 binding for Maven
 RemovePathPostfixes: -openjdk8
-Provides: maven-jdk-binding = %{epoch}:%{version}-%{release}
-Requires: maven = %{epoch}:%{version}-%{release}
+Provides: %{name}-jdk-binding = %{epoch}:%{version}-%{release}
+Requires: %{name} = %{epoch}:%{version}-%{release}
 Requires: java-1.8.0-openjdk-headless
 Recommends: java-1.8.0-openjdk-devel
-Conflicts: maven-jdk-binding
+Conflicts: %{name}-jdk-binding
 
 %description openjdk8
 Configures Maven to run with OpenJDK 8.
@@ -126,11 +126,11 @@ Configures Maven to run with OpenJDK 8.
 %package openjdk11
 Summary:        OpenJDK 11 binding for Maven
 RemovePathPostfixes: -openjdk11
-Provides: maven-jdk-binding = %{epoch}:%{version}-%{release}
-Requires: maven = %{epoch}:%{version}-%{release}
+Provides: %{name}-jdk-binding = %{epoch}:%{version}-%{release}
+Requires: %{name} = %{epoch}:%{version}-%{release}
 Requires: java-11-openjdk-headless
 Recommends: java-11-openjdk-devel
-Conflicts: maven-jdk-binding
+Conflicts: %{name}-jdk-binding
 
 %description openjdk11
 Configures Maven to run with OpenJDK 11.
@@ -138,11 +138,11 @@ Configures Maven to run with OpenJDK 11.
 %package openjdk17
 Summary:        OpenJDK 17 binding for Maven
 RemovePathPostfixes: -openjdk17
-Provides: maven-jdk-binding = %{epoch}:%{version}-%{release}
-Requires: maven = %{epoch}:%{version}-%{release}
+Provides: %{name}-jdk-binding = %{epoch}:%{version}-%{release}
+Requires: %{name} = %{epoch}:%{version}-%{release}
 Requires: java-17-openjdk-headless
 Recommends: java-17-openjdk-devel
-Conflicts: maven-jdk-binding
+Conflicts: %{name}-jdk-binding
 
 %description openjdk17
 Configures Maven to run with OpenJDK 17.
@@ -150,11 +150,11 @@ Configures Maven to run with OpenJDK 17.
 %package openjdk21
 Summary:        OpenJDK 21 binding for Maven
 RemovePathPostfixes: -openjdk21
-Provides: maven-jdk-binding = %{epoch}:%{version}-%{release}
-Requires: maven = %{epoch}:%{version}-%{release}
+Provides: %{name}-jdk-binding = %{epoch}:%{version}-%{release}
+Requires: %{name} = %{epoch}:%{version}-%{release}
 Requires: java-21-openjdk-headless
 Recommends: java-21-openjdk-devel
-Conflicts: maven-jdk-binding
+Conflicts: %{name}-jdk-binding
 
 %description openjdk21
 Configures Maven to run with OpenJDK 21.
@@ -162,7 +162,7 @@ Configures Maven to run with OpenJDK 21.
 %{?javadoc_package}
 
 %prep
-%setup -q -n apache-%{name}-%{version}
+%setup -q -n apache-maven-%{version}
 
 find -name '*.java' -exec sed -i 's/\r//' {} +
 find -name 'pom.xml' -exec sed -i 's/\r//' {} +
