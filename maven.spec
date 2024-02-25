@@ -76,6 +76,7 @@ BuildRequires:  mvn(org.slf4j:slf4j-simple)
 BuildRequires:  mvn(org.xmlunit:xmlunit-core)
 BuildRequires:  mvn(org.xmlunit:xmlunit-matchers)
 %endif
+BuildRequires: gnutar
 
 # XXX
 #BuildRequires:  mvn(org.slf4j:slf4j-simple::sources:) = %{bundled_slf4j_version}
@@ -214,7 +215,7 @@ sed -i "
 
 mkdir m2home
 (cd m2home
-    tar --delay-directory-restore -xvf ../apache-maven/target/*tar.gz
+    gtar --delay-directory-restore -xvf ../apache-maven/target/*tar.gz
 )
 
 
