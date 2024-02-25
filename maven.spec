@@ -14,7 +14,6 @@ Summary:        Java project management and project comprehension tool
 License:        Apache-2.0 AND MIT
 URL:            https://maven.apache.org/
 BuildArch:      noarch
-ExclusiveArch:  %{java_arches} noarch
 
 Source0:        https://archive.apache.org/dist/maven/maven-3/%{version}/source/apache-maven-%{version}-src.tar.gz
 Source1:        maven-bash-completion
