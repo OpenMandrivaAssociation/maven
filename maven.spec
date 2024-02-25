@@ -293,8 +293,8 @@ if [[ $1 -eq 0 ]]; then update-alternatives --remove mvn %{homedir}/bin/mvn; fi
 %ghost %{_bindir}/mvn
 %ghost %{_bindir}/mvnDebug
 %{_datadir}/bash-completion
-%ghost %{_mandir}/man1/mvn.1.gz
-%ghost %{_mandir}/man1/mvnDebug.1.gz
+%ghost %{_mandir}/man1/mvn.1.*
+%ghost %{_mandir}/man1/mvnDebug.1.*
 %if 0%{?maven_version_suffix:1}
 %{_bindir}/mvn%{maven_version_suffix}
 %{_bindir}/mvnDebug%{maven_version_suffix}
