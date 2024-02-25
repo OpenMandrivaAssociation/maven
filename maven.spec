@@ -298,8 +298,8 @@ if [[ $1 -eq 0 ]]; then update-alternatives --remove mvn %{homedir}/bin/mvn; fi
 %if 0%{?maven_version_suffix:1}
 %{_bindir}/mvn%{maven_version_suffix}
 %{_bindir}/mvnDebug%{maven_version_suffix}
-%{_mandir}/man1/mvn%{maven_version_suffix}.1.gz
-%{_mandir}/man1/mvnDebug%{maven_version_suffix}.1.gz
+%{_mandir}/man1/mvn%{maven_version_suffix}.1.*
+%{_mandir}/man1/mvnDebug%{maven_version_suffix}.1.*
 %endif
 
 %files openjdk8
