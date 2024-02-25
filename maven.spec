@@ -4,84 +4,85 @@
 %global homedir %{_datadir}/maven%{?maven_version_suffix}
 %global confdir %{_sysconfdir}/maven%{?maven_version_suffix}
 
-Name:           maven
-Epoch:          1
-Version:        3.9.6
-Release:        1
-Summary:        Java project management and project comprehension tool
+Name:		maven
+Epoch:		1
+Version:	3.9.6
+Release:	1
+Summary:	Java project management and project comprehension tool
 # maven itself is Apache-2.0
 # bundled slf4j is MIT
-License:        Apache-2.0 AND MIT
-URL:            https://maven.apache.org/
-BuildArch:      noarch
+License:	Apache-2.0 AND MIT
+Group:		Development/Java
+URL:		https://maven.apache.org/
+BuildArch:	noarch
 
-Source0:        https://archive.apache.org/dist/maven/maven-3/%{version}/source/apache-maven-%{version}-src.tar.gz
-Source1:        maven-bash-completion
-Source2:        mvn.1
+Source0:	https://archive.apache.org/dist/maven/maven-3/%{version}/source/apache-maven-%{version}-src.tar.gz
+Source1:	maven-bash-completion
+Source2:	mvn.1
 
-Patch1:         0001-Adapt-mvn-script.patch
+Patch1:	 0001-Adapt-mvn-script.patch
 # Downstream-specific, avoids build-dependency on logback
-Patch2:         0002-Invoke-logback-via-reflection.patch
-Patch3:         0003-Remove-dependency-on-powermock.patch
+Patch2:	 0002-Invoke-logback-via-reflection.patch
+Patch3:	 0003-Remove-dependency-on-powermock.patch
 
 %if %{with bootstrap}
-BuildRequires:  javapackages-bootstrap
+BuildRequires:	javapackages-bootstrap
 %else
-BuildRequires:  maven-local
-BuildRequires:  mvn(com.google.guava:failureaccess)
-BuildRequires:  mvn(com.google.guava:guava)
-BuildRequires:  mvn(com.google.inject:guice)
-BuildRequires:  mvn(commons-cli:commons-cli)
-BuildRequires:  mvn(commons-io:commons-io)
-BuildRequires:  mvn(commons-jxpath:commons-jxpath)
-BuildRequires:  mvn(javax.annotation:javax.annotation-api)
-BuildRequires:  mvn(javax.inject:javax.inject)
-BuildRequires:  mvn(junit:junit)
-BuildRequires:  mvn(org.apache.commons:commons-lang3)
-BuildRequires:  mvn(org.apache.maven.plugins:maven-assembly-plugin)
-BuildRequires:  mvn(org.apache.maven.plugins:maven-dependency-plugin)
-BuildRequires:  mvn(org.apache.maven.plugins:maven-enforcer-plugin)
-BuildRequires:  mvn(org.apache.maven.plugins:maven-failsafe-plugin)
-BuildRequires:  mvn(org.apache.maven.resolver:maven-resolver-api)
-BuildRequires:  mvn(org.apache.maven.resolver:maven-resolver-connector-basic)
-BuildRequires:  mvn(org.apache.maven.resolver:maven-resolver-impl)
-BuildRequires:  mvn(org.apache.maven.resolver:maven-resolver-spi)
-BuildRequires:  mvn(org.apache.maven.resolver:maven-resolver-transport-file)
-BuildRequires:  mvn(org.apache.maven.resolver:maven-resolver-transport-http)
-BuildRequires:  mvn(org.apache.maven.resolver:maven-resolver-transport-wagon)
-BuildRequires:  mvn(org.apache.maven.resolver:maven-resolver-util)
-BuildRequires:  mvn(org.apache.maven.shared:maven-shared-utils)
-BuildRequires:  mvn(org.apache.maven.wagon:wagon-file)
-BuildRequires:  mvn(org.apache.maven.wagon:wagon-http)
-BuildRequires:  mvn(org.apache.maven.wagon:wagon-provider-api)
-BuildRequires:  mvn(org.apache.maven:maven-parent:pom:)
-BuildRequires:  mvn(org.codehaus.modello:modello-maven-plugin)
-BuildRequires:  mvn(org.codehaus.mojo:build-helper-maven-plugin)
-BuildRequires:  mvn(org.codehaus.plexus:plexus-cipher)
-BuildRequires:  mvn(org.codehaus.plexus:plexus-classworlds)
-BuildRequires:  mvn(org.codehaus.plexus:plexus-component-annotations)
-BuildRequires:  mvn(org.codehaus.plexus:plexus-component-metadata)
-BuildRequires:  mvn(org.codehaus.plexus:plexus-interpolation)
-BuildRequires:  mvn(org.codehaus.plexus:plexus-sec-dispatcher)
-BuildRequires:  mvn(org.codehaus.plexus:plexus-utils)
-BuildRequires:  mvn(org.eclipse.sisu:org.eclipse.sisu.inject)
-BuildRequires:  mvn(org.eclipse.sisu:org.eclipse.sisu.plexus)
-BuildRequires:  mvn(org.eclipse.sisu:sisu-maven-plugin)
-BuildRequires:  mvn(org.fusesource.jansi:jansi)
-BuildRequires:  mvn(org.hamcrest:hamcrest)
-BuildRequires:  mvn(org.mockito:mockito-core)
-BuildRequires:  mvn(org.slf4j:jcl-over-slf4j)
-BuildRequires:  mvn(org.slf4j:slf4j-api)
-BuildRequires:  mvn(org.slf4j:slf4j-simple)
-BuildRequires:  mvn(org.xmlunit:xmlunit-core)
-BuildRequires:  mvn(org.xmlunit:xmlunit-matchers)
+BuildRequires:	maven-local
+BuildRequires:	mvn(com.google.guava:failureaccess)
+BuildRequires:	mvn(com.google.guava:guava)
+BuildRequires:	mvn(com.google.inject:guice)
+BuildRequires:	mvn(commons-cli:commons-cli)
+BuildRequires:	mvn(commons-io:commons-io)
+BuildRequires:	mvn(commons-jxpath:commons-jxpath)
+BuildRequires:	mvn(javax.annotation:javax.annotation-api)
+BuildRequires:	mvn(javax.inject:javax.inject)
+BuildRequires:	mvn(junit:junit)
+BuildRequires:	mvn(org.apache.commons:commons-lang3)
+BuildRequires:	mvn(org.apache.maven.plugins:maven-assembly-plugin)
+BuildRequires:	mvn(org.apache.maven.plugins:maven-dependency-plugin)
+BuildRequires:	mvn(org.apache.maven.plugins:maven-enforcer-plugin)
+BuildRequires:	mvn(org.apache.maven.plugins:maven-failsafe-plugin)
+BuildRequires:	mvn(org.apache.maven.resolver:maven-resolver-api)
+BuildRequires:	mvn(org.apache.maven.resolver:maven-resolver-connector-basic)
+BuildRequires:	mvn(org.apache.maven.resolver:maven-resolver-impl)
+BuildRequires:	mvn(org.apache.maven.resolver:maven-resolver-spi)
+BuildRequires:	mvn(org.apache.maven.resolver:maven-resolver-transport-file)
+BuildRequires:	mvn(org.apache.maven.resolver:maven-resolver-transport-http)
+BuildRequires:	mvn(org.apache.maven.resolver:maven-resolver-transport-wagon)
+BuildRequires:	mvn(org.apache.maven.resolver:maven-resolver-util)
+BuildRequires:	mvn(org.apache.maven.shared:maven-shared-utils)
+BuildRequires:	mvn(org.apache.maven.wagon:wagon-file)
+BuildRequires:	mvn(org.apache.maven.wagon:wagon-http)
+BuildRequires:	mvn(org.apache.maven.wagon:wagon-provider-api)
+BuildRequires:	mvn(org.apache.maven:maven-parent:pom:)
+BuildRequires:	mvn(org.codehaus.modello:modello-maven-plugin)
+BuildRequires:	mvn(org.codehaus.mojo:build-helper-maven-plugin)
+BuildRequires:	mvn(org.codehaus.plexus:plexus-cipher)
+BuildRequires:	mvn(org.codehaus.plexus:plexus-classworlds)
+BuildRequires:	mvn(org.codehaus.plexus:plexus-component-annotations)
+BuildRequires:	mvn(org.codehaus.plexus:plexus-component-metadata)
+BuildRequires:	mvn(org.codehaus.plexus:plexus-interpolation)
+BuildRequires:	mvn(org.codehaus.plexus:plexus-sec-dispatcher)
+BuildRequires:	mvn(org.codehaus.plexus:plexus-utils)
+BuildRequires:	mvn(org.eclipse.sisu:org.eclipse.sisu.inject)
+BuildRequires:	mvn(org.eclipse.sisu:org.eclipse.sisu.plexus)
+BuildRequires:	mvn(org.eclipse.sisu:sisu-maven-plugin)
+BuildRequires:	mvn(org.fusesource.jansi:jansi)
+BuildRequires:	mvn(org.hamcrest:hamcrest)
+BuildRequires:	mvn(org.mockito:mockito-core)
+BuildRequires:	mvn(org.slf4j:jcl-over-slf4j)
+BuildRequires:	mvn(org.slf4j:slf4j-api)
+BuildRequires:	mvn(org.slf4j:slf4j-simple)
+BuildRequires:	mvn(org.xmlunit:xmlunit-core)
+BuildRequires:	mvn(org.xmlunit:xmlunit-matchers)
 %endif
 BuildRequires: gnutar
 
 # XXX
-#BuildRequires:  mvn(org.slf4j:slf4j-simple::sources:) = %{bundled_slf4j_version}
+#BuildRequires:	mvn(org.slf4j:slf4j-simple::sources:) = %{bundled_slf4j_version}
 %if %{without bootstrap}
-BuildRequires:  mvn(org.slf4j:slf4j-simple::sources:)
+BuildRequires:	mvn(org.slf4j:slf4j-simple::sources:)
 %endif
 
 Requires: %{name}-lib = %{epoch}:%{version}-%{release}
@@ -97,7 +98,7 @@ concept of a project object model (POM), Maven can manage a project's build,
 reporting and documentation from a central piece of information.
 
 %package lib
-Summary:        Core part of Maven
+Summary:	Core part of Maven
 # If XMvn is part of the same RPM transaction then it should be
 # installed first to avoid triggering rhbz#1014355.
 OrderWithRequires: xmvn-minimal
@@ -106,13 +107,13 @@ OrderWithRequires: xmvn-minimal
 # slf4j-simple-sources.jar, apply non-upstreamable, Maven-specific
 # patch (using a script written in Groovy), compile and package as
 # maven-slf4j-provider.jar, together with Maven-specific additions.
-Provides:       bundled(slf4j) = %{bundled_slf4j_version}
+Provides:	bundled(slf4j) = %{bundled_slf4j_version}
 
 %description lib
 Core part of Apache Maven that can be used as a library.
 
 %package openjdk8
-Summary:        OpenJDK 8 binding for Maven
+Summary:	OpenJDK 8 binding for Maven
 RemovePathPostfixes: -openjdk8
 Provides: %{name}-jdk-binding = %{epoch}:%{version}-%{release}
 Requires: %{name} = %{epoch}:%{version}-%{release}
@@ -124,7 +125,7 @@ Conflicts: %{name}-jdk-binding
 Configures Maven to run with OpenJDK 8.
 
 %package openjdk11
-Summary:        OpenJDK 11 binding for Maven
+Summary:	OpenJDK 11 binding for Maven
 RemovePathPostfixes: -openjdk11
 Provides: %{name}-jdk-binding = %{epoch}:%{version}-%{release}
 Requires: %{name} = %{epoch}:%{version}-%{release}
@@ -136,7 +137,7 @@ Conflicts: %{name}-jdk-binding
 Configures Maven to run with OpenJDK 11.
 
 %package openjdk17
-Summary:        OpenJDK 17 binding for Maven
+Summary:	OpenJDK 17 binding for Maven
 RemovePathPostfixes: -openjdk17
 Provides: %{name}-jdk-binding = %{epoch}:%{version}-%{release}
 Requires: %{name} = %{epoch}:%{version}-%{release}
@@ -148,7 +149,7 @@ Conflicts: %{name}-jdk-binding
 Configures Maven to run with OpenJDK 17.
 
 %package openjdk21
-Summary:        OpenJDK 21 binding for Maven
+Summary:	OpenJDK 21 binding for Maven
 RemovePathPostfixes: -openjdk21
 Provides: %{name}-jdk-binding = %{epoch}:%{version}-%{release}
 Requires: %{name} = %{epoch}:%{version}-%{release}
@@ -192,8 +193,8 @@ rm apache-maven/src/main/appended-resources/META-INF/LICENSE.vm
 %pom_remove_plugin -r :buildnumber-maven-plugin
 sed -i "
 /buildNumber=/ {
-  s/=.*/=Red Hat %{version}-%{release}/
-  s/%{dist}$//
+	s/=.*/=Red Hat %{version}-%{release}/
+	s/%{dist}$//
 }
 /timestamp=/ d
 " `find -name build.properties`
@@ -215,7 +216,7 @@ sed -i "
 
 mkdir m2home
 (cd m2home
-    gtar --delay-directory-restore -xvf ../apache-maven/target/*tar.gz
+	gtar --delay-directory-restore -xvf ../apache-maven/target/*tar.gz
 )
 
 
