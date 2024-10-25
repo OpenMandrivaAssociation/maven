@@ -6,7 +6,7 @@
 
 Name:		maven
 Epoch:		1
-Version:	3.9.6
+Version:	3.9.9
 Release:	1
 Summary:	Java project management and project comprehension tool
 # maven itself is Apache-2.0
