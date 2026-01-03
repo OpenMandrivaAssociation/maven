@@ -6,7 +6,7 @@
 
 Name:		maven
 Epoch:		1
-Version:	3.9.9
+Version:	3.9.11
 Release:	1
 Summary:	Java project management and project comprehension tool
 # maven itself is Apache-2.0
@@ -38,10 +38,8 @@ BuildRequires:	mvn(commons-jxpath:commons-jxpath)
 BuildRequires:	mvn(javax.annotation:javax.annotation-api)
 BuildRequires:	mvn(javax.inject:javax.inject)
 BuildRequires:	mvn(junit:junit)
-BuildRequires:	mvn(org.apache.commons:commons-lang3)
 BuildRequires:	mvn(org.apache.maven.plugins:maven-assembly-plugin)
 BuildRequires:	mvn(org.apache.maven.plugins:maven-dependency-plugin)
-BuildRequires:	mvn(org.apache.maven.plugins:maven-enforcer-plugin)
 BuildRequires:	mvn(org.apache.maven.plugins:maven-failsafe-plugin)
 BuildRequires:	mvn(org.apache.maven.resolver:maven-resolver-api)
 BuildRequires:	mvn(org.apache.maven.resolver:maven-resolver-connector-basic)
@@ -89,9 +87,6 @@ Requires: %{name}-lib = %{epoch}:%{version}-%{release}
 Requires: %{name}-jdk-binding = %{epoch}:%{version}-%{release}
 Suggests: %{name}-openjdk21 = %{epoch}:%{version}-%{release}
 
-Requires(post): alternatives
-Requires(postun): alternatives
-
 %description
 Maven is a software project management and comprehension tool. Based on the
 concept of a project object model (POM), Maven can manage a project's build,
@@ -112,65 +107,12 @@ Provides:	bundled(slf4j) = %{bundled_slf4j_version}
 %description lib
 Core part of Apache Maven that can be used as a library.
 
-%package openjdk8
-Summary:	OpenJDK 8 binding for Maven
-RemovePathPostfixes: -openjdk8
-Provides: %{name}-jdk-binding = %{epoch}:%{version}-%{release}
-Requires: %{name} = %{epoch}:%{version}-%{release}
-Requires: java-1.8.0-openjdk-headless
-Recommends: java-1.8.0-openjdk-devel
-Conflicts: %{name}-jdk-binding
-
-%description openjdk8
-Configures Maven to run with OpenJDK 8.
-
-%package openjdk11
-Summary:	OpenJDK 11 binding for Maven
-RemovePathPostfixes: -openjdk11
-Provides: %{name}-jdk-binding = %{epoch}:%{version}-%{release}
-Requires: %{name} = %{epoch}:%{version}-%{release}
-Requires: java-11-openjdk-headless
-Recommends: java-11-openjdk-devel
-Conflicts: %{name}-jdk-binding
-
-%description openjdk11
-Configures Maven to run with OpenJDK 11.
-
-%package openjdk17
-Summary:	OpenJDK 17 binding for Maven
-RemovePathPostfixes: -openjdk17
-Provides: %{name}-jdk-binding = %{epoch}:%{version}-%{release}
-Requires: %{name} = %{epoch}:%{version}-%{release}
-Requires: java-17-openjdk-headless
-Recommends: java-17-openjdk-devel
-Conflicts: %{name}-jdk-binding
-
-%description openjdk17
-Configures Maven to run with OpenJDK 17.
-
-%package openjdk21
-Summary:	OpenJDK 21 binding for Maven
-RemovePathPostfixes: -openjdk21
-Provides: %{name}-jdk-binding = %{epoch}:%{version}-%{release}
-Requires: %{name} = %{epoch}:%{version}-%{release}
-Requires: java-21-openjdk-headless
-Recommends: java-21-openjdk-devel
-Conflicts: %{name}-jdk-binding
-
-%description openjdk21
-Configures Maven to run with OpenJDK 21.
-
-%{?javadoc_package}
-
 %prep
-%setup -q -n apache-maven-%{version}
+%autosetup -p1 -C
 
 find -name '*.java' -exec sed -i 's/\r//' {} +
 find -name 'pom.xml' -exec sed -i 's/\r//' {} +
 
-%patch -P 1 -p1
-%patch -P 2 -p1
-%patch -P 3 -p1
 sed -i "s/@{maven_version_suffix}/%{?maven_version_suffix}/" apache-maven/src/bin/mvn
 
 # not really used during build, but a precaution
@@ -187,6 +129,7 @@ sed -i 's:\r::' apache-maven/src/conf/settings.xml
 rm apache-maven/src/main/appended-resources/META-INF/LICENSE.vm
 
 # Disable plugins which are not useful for us
+%pom_remove_plugin -r :maven-enforcer-plugin
 %pom_remove_plugin -r :animal-sniffer-maven-plugin
 %pom_remove_plugin -r :apache-rat-plugin
 %pom_remove_plugin -r :maven-site-plugin
@@ -208,11 +151,8 @@ sed -i "
 
 %mvn_alias :maven-resolver-provider :maven-aether-provider
 
-%pom_remove_plugin :plexus-component-metadata maven-model-builder
-%pom_add_plugin org.eclipse.sisu:sisu-maven-plugin maven-model-builder
-
 %build
-%mvn_build -- -Dproject.build.sourceEncoding=UTF-8
+%mvn_build -j -- -Dproject.build.sourceEncoding=UTF-8
 
 mkdir m2home
 (cd m2home
@@ -231,7 +171,7 @@ install -d -m 755 %{buildroot}%{_datadir}/bash-completion/completions/
 
 cp -a $M2_HOME/{bin,lib,boot} %{buildroot}%{homedir}/
 %if %{without bootstrap}
-xmvn-subst -s -R %{buildroot} -s %{buildroot}%{homedir}
+xmvn-subst -s -R %{buildroot} %{buildroot}%{homedir}
 %endif
 
 # maven uses this hardcoded path in its launcher to locate jansi so we symlink it
@@ -263,20 +203,13 @@ ln -s %{homedir}/bin/mvnDebug.1.gz %{buildroot}%{_mandir}/man1/mvnDebug%{maven_v
 
 # JDK bindings
 install -d -m 755 %{buildroot}%{_javaconfdir}/
-echo JAVA_HOME=%{_jvmlibdir}/jre-1.8.0-openjdk >%{buildroot}%{_javaconfdir}/maven%{?maven_version_suffix}.conf-openjdk8
-echo JAVA_HOME=%{_jvmlibdir}/jre-11-openjdk >%{buildroot}%{_javaconfdir}/maven%{?maven_version_suffix}.conf-openjdk11
-echo JAVA_HOME=%{_jvmlibdir}/jre-17-openjdk >%{buildroot}%{_javaconfdir}/maven%{?maven_version_suffix}.conf-openjdk17
-echo JAVA_HOME=%{_jvmlibdir}/jre-21-openjdk >%{buildroot}%{_javaconfdir}/maven%{?maven_version_suffix}.conf-openjdk21
-
-
-%post
-update-alternatives --install %{_bindir}/mvn mvn %{homedir}/bin/mvn %{?maven_alternatives_priority}0 \
---slave %{_bindir}/mvnDebug mvnDebug %{homedir}/bin/mvnDebug \
---slave %{_mandir}/man1/mvn.1.gz mvn1 %{homedir}/bin/mvn.1.gz \
---slave %{_mandir}/man1/mvnDebug.1.gz mvnDebug1 %{homedir}/bin/mvn.1.gz \
-
-%postun
-if [[ $1 -eq 0 ]]; then update-alternatives --remove mvn %{homedir}/bin/mvn; fi
+ln -sf %{_jpbindingdir}/maven%{?maven_version_suffix}.conf %{buildroot}%{_javaconfdir}/maven%{?maven_version_suffix}.conf
+echo JAVA_HOME=%{_jvmdir}/jre-21-openjdk >%{buildroot}%{_javaconfdir}/maven%{?maven_version_suffix}-openjdk21.conf
+echo JAVA_HOME=%{_jvmdir}/jre-25-openjdk >%{buildroot}%{_javaconfdir}/maven%{?maven_version_suffix}-openjdk25.conf
+%jp_binding --verbose --variant openjdk21 --ghost maven%{?maven_version_suffix}.conf --target %{_javaconfdir}/maven%{?maven_version_suffix}-openjdk21.conf --provides %{name}-jdk-binding --requires java-21-openjdk-headless --recommends java-21-openjdk-devel
+%jp_binding --verbose --variant openjdk25 --ghost maven%{?maven_version_suffix}.conf --target %{_javaconfdir}/maven%{?maven_version_suffix}-openjdk25.conf --provides %{name}-jdk-binding --requires java-25-openjdk-headless --recommends java-25-openjdk-devel
+touch %{buildroot}%{_javaconfdir}/maven%{?maven_version_suffix}-unbound.conf
+%jp_binding --verbose --variant unbound --ghost maven%{?maven_version_suffix}.conf --target %{_javaconfdir}/maven%{?maven_version_suffix}-unbound.conf --provides %{name}-jdk-binding
 
 %files lib -f .mfiles
 %doc README.md
@@ -285,6 +218,7 @@ if [[ $1 -eq 0 ]]; then update-alternatives --remove mvn %{homedir}/bin/mvn; fi
 %exclude %{homedir}/bin/mvn*
 %dir %{confdir}
 %dir %{confdir}/logging
+%config %{_javaconfdir}/maven%{?maven_version_suffix}*.conf
 %config(noreplace) %{_sysconfdir}/m2%{?maven_version_suffix}.conf
 %config(noreplace) %{confdir}/settings.xml
 %config(noreplace) %{confdir}/logging/simplelogger.properties
@@ -294,24 +228,11 @@ if [[ $1 -eq 0 ]]; then update-alternatives --remove mvn %{homedir}/bin/mvn; fi
 %ghost %{_bindir}/mvn
 %ghost %{_bindir}/mvnDebug
 %{_datadir}/bash-completion
-%ghost %{_mandir}/man1/mvn.1.*
-%ghost %{_mandir}/man1/mvnDebug.1.*
+%ghost %{_mandir}/man1/mvn.1.zst
+%ghost %{_mandir}/man1/mvnDebug.1.zst
 %if 0%{?maven_version_suffix:1}
 %{_bindir}/mvn%{maven_version_suffix}
 %{_bindir}/mvnDebug%{maven_version_suffix}
-%{_mandir}/man1/mvn%{maven_version_suffix}.1.*
-%{_mandir}/man1/mvnDebug%{maven_version_suffix}.1.*
+%{_mandir}/man1/mvn%{maven_version_suffix}.1.zst
+%{_mandir}/man1/mvnDebug%{maven_version_suffix}.1.zst
 %endif
-
-%files openjdk8
-%config %{_javaconfdir}/maven%{?maven_version_suffix}.conf-openjdk8
-
-%files openjdk11
-%config %{_javaconfdir}/maven%{?maven_version_suffix}.conf-openjdk11
-
-%files openjdk17
-%config %{_javaconfdir}/maven%{?maven_version_suffix}.conf-openjdk17
-
-%files openjdk21
-%config %{_javaconfdir}/maven%{?maven_version_suffix}.conf-openjdk21
-
