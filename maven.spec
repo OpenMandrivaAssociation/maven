@@ -51,7 +51,9 @@ Obsoletes:	maven-lib < 1:%{version}-%{release}
 Obsoletes:	maven-openjdk21 < 1:%{version}-%{release}
 Obsoletes:	maven-openjdk25 < 1:%{version}-%{release}
 Obsoletes:	maven-unbound < 1:%{version}-%{release}
-Requires:	%{_sysjar_java_requires}
+# The SRPM is parsed before sysjar is installed, so the sysjar macro is
+# not defined yet. This package does not pin a JDK.
+Requires:	java-current
 
 %description
 Maven is a software project management and comprehension tool. Based on the
