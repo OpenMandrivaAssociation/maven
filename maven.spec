@@ -5,12 +5,15 @@
 %global sysjar_drops --drop org.codehaus.mojo:animal-sniffer-maven-plugin --drop org.apache.rat:apache-rat-plugin --drop org.apache.maven.plugins:maven-enforcer-plugin --drop org.codehaus.mojo:buildnumber-maven-plugin --drop ch.qos.logback:logback-classic --drop org.powermock:powermock-reflect --drop biz.aQute.bnd:bnd-maven-plugin --drop org.eclipse.jetty:jetty-bom
 %if %{with bootstrap}
 %global sysjar_bootstrap 1
-%{!?_sysjar_mvn:%global _sysjar_mvn %{_datadir}/javapackages-bootstrap/bin/mvn}
-%{!?sysjar_bootstrap_root:%global sysjar_bootstrap_root /}
-# Resolver 2.0.24 is not in the bootstrap set (that set has 2.0.9). The
-# stage-0 sisu indexer is taught the running JDK and installed into jdk27-root
-# first. A command-line definition wins.
-%{!?sysjar_extra:%global sysjar_extra --root / --root %{_builddir}/jdk27-root --root %{_builddir}/resolver-root}
+# Private copy of the bootstrap tree. %build patches its ASM and rewrites
+# the metadata so both Maven's class realm and the plugin realm load that
+# copy. A command-line definition wins.
+%{!?_sysjar_mvn:%global _sysjar_mvn %{_builddir}/jpb-root/usr/share/javapackages-bootstrap/bin/mvn}
+# Resolver 2.0.24 is not in the bootstrap set (that set has 2.0.9).
+%{!?sysjar_extra:%global sysjar_extra --root / --root %{_builddir}/resolver-root}
+# --bootstrap would also read the installed tree. An equal version loaded
+# later replaces this patched copy, so name only the private root.
+%global __sysjar_mode --bootstrap-root %{_builddir}/jpb-root %{?sysjar_extra} %{?sysjar_drops}
 %endif
 
 Name:		maven
@@ -113,23 +116,23 @@ patch -d %{_builddir}/maven-resolver-%{resolver_version} -p1 < %{SOURCE5}
 
 %build -p
 %if %{with bootstrap}
-# Shaded ASM in the stage-0 indexer stops at Java 25. Keep the rest of that
-# jar and raise the class-file ceiling to the running JDK.
+# sisu-maven-plugin depends on org.eclipse.sisu.inject, and that dependency
+# is the ClassReader which scans JDK classes. Patch the copy the metadata
+# points at. The installed tree is not writable by the build user.
+jpb=%{_builddir}/jpb-root/usr/share/javapackages-bootstrap
+install -d %{_builddir}/jpb-root/usr/share
+cp -a %{_datadir}/javapackages-bootstrap "$jpb"
 python %{SOURCE6} \
-	%{sysjar_bootstrap_root}/usr/share/javapackages-bootstrap/org.eclipse.sisu.inject.jar \
-	%{_builddir}/org.eclipse.sisu.inject.jar
-install -d %{_builddir}/sisu-pom
-cat > %{_builddir}/sisu-pom/org.eclipse.sisu.inject.pom <<'EOF'
-<?xml version="1.0" encoding="UTF-8"?>
-<project>
-  <modelVersion>4.0.0</modelVersion>
-  <groupId>org.eclipse.sisu</groupId>
-  <artifactId>org.eclipse.sisu.inject</artifactId>
-  <version>0.9.0.M3</version>
-</project>
-EOF
-sysjar install --buildroot %{_builddir}/jdk27-root \
-	--artifact %{_builddir}/sisu-pom/org.eclipse.sisu.inject.pom:%{_builddir}/org.eclipse.sisu.inject.jar
+	"$jpb/org.eclipse.sisu.inject.jar" \
+	"$jpb/org.eclipse.sisu.inject.jar.jdk"
+mv -f "$jpb/org.eclipse.sisu.inject.jar.jdk" \
+	"$jpb/org.eclipse.sisu.inject.jar"
+python %{SOURCE6} \
+	"$jpb/asm.jar" \
+	"$jpb/asm.jar.jdk"
+mv -f "$jpb/asm.jar.jdk" "$jpb/asm.jar"
+sed -i "s|/usr/share/javapackages-bootstrap/|$jpb/|g" \
+	"$jpb"/maven-metadata/*.xml
 (
 	cd %{_builddir}/maven-resolver-%{resolver_version}
 	%__sysjar_use_java_home

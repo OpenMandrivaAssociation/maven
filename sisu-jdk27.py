@@ -1,11 +1,11 @@
 #!/usr/bin/python
-"""Raise the stage-0 Sisu indexer's class-file ceiling to the running JDK.
+"""Raise a stage-0 ASM ClassReader's class-file ceiling to the running JDK.
 
-javapackages-bootstrap shades ASM inside org.eclipse.sisu.inject. That copy
-rejects class files newer than Java 25 (major 69). The indexer only parses
-class structure, and this JDK's classes parse once the ceiling is the
-running major version. The check is a bipush, so the major must fit in a
-signed byte.
+javapackages-bootstrap rejects class files newer than Java 25 (major 69) in
+two copies: the shaded reader inside org.eclipse.sisu.inject, which the Sisu
+indexer uses, and org.objectweb.asm.ClassReader in asm.jar. Either reader
+parses once the ceiling is the running major version. The check is a bipush,
+so the major must fit in a signed byte.
 """
 
 import os
@@ -17,7 +17,11 @@ import tempfile
 import zipfile
 from pathlib import Path
 
-ENTRY = "org/eclipse/sisu/space/asm/ClassReader.class"
+# Shaded Sisu reader, and the standalone ASM jar. A jar has one of these.
+ENTRIES = (
+    "org/eclipse/sisu/space/asm/ClassReader.class",
+    "org/objectweb/asm/ClassReader.class",
+)
 # The constructor does readShort(); bipush 69; if_icmple. 69 is Java 25.
 OLD_MAJOR = 69
 
@@ -84,16 +88,23 @@ def main() -> None:
     dest = Path(sys.argv[2])
     major = runtime_major(java_home())
     with zipfile.ZipFile(source) as archive:
-        original = archive.read(ENTRY)
-        info = archive.getinfo(ENTRY)
-        patched = patch(original, major)
+        present = [entry for entry in ENTRIES if entry in archive.namelist()]
+        if not present:
+            raise SystemExit(f"no ASM ClassReader in {source}")
+        patched = {entry: patch(archive.read(entry), major) for entry in present}
+        infos = {entry: archive.getinfo(entry) for entry in present}
         if dest.exists():
             dest.unlink()
         with zipfile.ZipFile(dest, "w") as out:
             for item in archive.infolist():
-                blob = patched if item.filename == ENTRY else archive.read(item.filename)
-                out.writestr(item if item.filename != ENTRY else info, blob)
-    print(f"sisu indexer class-file ceiling {max(OLD_MAJOR, major)} (running JDK major {major})")
+                blob = patched.get(item.filename)
+                if blob is None:
+                    blob = archive.read(item.filename)
+                    out.writestr(item, blob)
+                else:
+                    out.writestr(infos[item.filename], blob)
+    names = ", ".join(present)
+    print(f"ASM class-file ceiling {max(OLD_MAJOR, major)} in {names} (running JDK major {major})")
 
 
 if __name__ == "__main__":
