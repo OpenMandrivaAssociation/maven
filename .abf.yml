@@ -1,4 +1,4 @@
-sources: {}
+sources:
   apache-maven-3.10.0-src.tar.gz: 17e52b59c0cf255124532ba81db31055c738b58d
   slf4j-simple-2.0.17-sources.jar: 59514e6ee2a098b2127cc6923e241be86a087f31
   maven-resolver-2.0.24-source-release.zip: 5d629a0697b3b2c41a37a2fe47f8817d2f76ec34
