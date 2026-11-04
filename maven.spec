@@ -159,6 +159,65 @@ chmod 755 %{_builddir}/jpb-root/mvn-jdk27
 	%sysjar_mvn -Dmaven.test.skip=true -Dproject.build.sourceEncoding=UTF-8 package
 	sysjar install --buildroot %{_builddir}/resolver-root --auto .
 )
+	# XMvn resolves a request for these coordinates to the unversioned
+	# bootstrap jar (Resolver 1.9.22) and never opens the 2.0.24 jar.
+	# An exact version in the private metadata is the file it returns.
+	python - "$jpb/maven-metadata/resolver-%{resolver_version}.xml" "%{_builddir}/resolver-root" << 'PY'
+import json, sys
+from pathlib import Path
+import xml.etree.ElementTree as ET
+
+dest = Path(sys.argv[1])
+buildroot = Path(sys.argv[2])
+index = buildroot / "usr/share/sysjar/index/org.apache.maven.resolver"
+meta = ET.Element("metadata")
+arts = ET.SubElement(meta, "artifacts")
+
+def add_file(data, extension, stored):
+    if not stored:
+        return
+    path = buildroot / stored.lstrip("/")
+    if not path.is_file():
+        raise SystemExit(f"missing {path}")
+    node = ET.SubElement(arts, "artifact")
+    ET.SubElement(node, "groupId").text = data["groupId"]
+    ET.SubElement(node, "artifactId").text = data["artifactId"]
+    if extension != "jar":
+        ET.SubElement(node, "extension").text = extension
+    if data.get("classifier"):
+        ET.SubElement(node, "classifier").text = data["classifier"]
+    ET.SubElement(node, "version").text = data["version"]
+    ET.SubElement(node, "path").text = str(path)
+    compat = ET.SubElement(node, "compatVersions")
+    ET.SubElement(compat, "version").text = data["version"]
+    if extension != "pom":
+        return
+    deps = ET.SubElement(node, "dependencies")
+    for dep in data.get("dependencies") or []:
+        if dep.get("optional") or dep.get("scope") not in (None, "", "compile"):
+            continue
+        item = ET.SubElement(deps, "dependency")
+        ET.SubElement(item, "groupId").text = dep["groupId"]
+        ET.SubElement(item, "artifactId").text = dep["artifactId"]
+        if dep["groupId"] == "org.apache.maven.resolver":
+            ET.SubElement(item, "requestedVersion").text = data["version"]
+            ET.SubElement(item, "resolvedVersion").text = data["version"]
+
+for record in sorted(index.glob("*.sysjar")):
+    data = json.loads(record.read_text())
+    extension = data.get("extension") or "jar"
+    if extension == "pom":
+        add_file(data, "pom", data.get("pom") or data.get("path") or "")
+    else:
+        add_file(data, "jar", data.get("jar") or data.get("path") or "")
+        if data.get("pom"):
+            add_file(data, "pom", data["pom"])
+
+if not len(arts):
+    raise SystemExit(f"no resolver artifacts under {index}")
+dest.parent.mkdir(parents=True, exist_ok=True)
+ET.ElementTree(meta).write(dest, encoding="utf-8", xml_declaration=True)
+PY
 %endif
 
 %install
