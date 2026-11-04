@@ -133,6 +133,69 @@ python %{SOURCE6} \
 mv -f "$jpb/asm.jar.jdk" "$jpb/asm.jar"
 sed -i "s|/usr/share/javapackages-bootstrap/|$jpb/|g" \
 	"$jpb"/maven-metadata/*.xml
+# sysjar stamps the metadata version (2.0.17.MBI). XMvn indexes an
+# artifact under compatVersions only. An empty list means SYSTEM, the
+# older unversioned jar, so a request for 2.0.17.MBI opened slf4j-api.jar
+# (1.7.36) and maven-slf4j-provider could not see the 2.0 SPI. A second
+# metadata file repeats each version text as a compat key.
+python - "$jpb/maven-metadata" << 'PY'
+import sys
+import xml.etree.ElementTree as ET
+from pathlib import Path
+
+meta = Path(sys.argv[1])
+dest = meta / "mbi-versions.xml"
+root_out = ET.Element("metadata")
+arts_out = ET.SubElement(root_out, "artifacts")
+seen = set()
+
+def parents_of(root):
+    return {child: parent for parent in root.iter() for child in list(parent)}
+
+for path in sorted(meta.glob("*.xml")):
+    if path.name == dest.name:
+        continue
+    tree = ET.parse(path)
+    parents = parents_of(tree.getroot())
+    for node in tree.getroot().iter("artifact"):
+        parent = parents.get(node)
+        if parent is None or parent.tag != "artifacts":
+            continue
+        version = (node.findtext("version") or "").strip()
+        compat = node.find("compatVersions")
+        if compat is None or not version:
+            continue
+        have = {(item.text or "").strip() for item in list(compat)}
+        if version in have:
+            continue
+        extension = (node.findtext("extension") or "jar").strip()
+        classifier = (node.findtext("classifier") or "").strip()
+        key = (
+            node.findtext("groupId"),
+            node.findtext("artifactId"),
+            extension,
+            classifier,
+            version,
+        )
+        if key in seen:
+            continue
+        seen.add(key)
+        copy = ET.Element("artifact")
+        for tag in ("groupId", "artifactId", "extension", "classifier", "version", "path"):
+            text = node.findtext(tag)
+            if text:
+                ET.SubElement(copy, tag).text = text
+        comps = ET.SubElement(copy, "compatVersions")
+        ET.SubElement(comps, "version").text = version
+        for extra in ("aliases", "dependencies"):
+            child = node.find(extra)
+            if child is not None:
+                copy.append(ET.fromstring(ET.tostring(child)))
+        arts_out.append(copy)
+
+if len(arts_out):
+    dest.write_bytes(ET.tostring(root_out, encoding="utf-8", xml_declaration=True))
+PY
 # XMvn, not sysjar, opens that jar. It reads the installed configuration
 # and follows the absolute path stored there, which is the unpatched
 # copy. A later metadata repository wins when duplicates are not ignored,
