@@ -1,0 +1,353 @@
+diff -ru /tmp/resolver-pristine/maven-resolver-2.0.24/maven-resolver-api/pom.xml /tmp/resolver-patched/maven-resolver-2.0.24/maven-resolver-api/pom.xml
+--- a/maven-resolver-api/pom.xml	2026-09-27 20:15:42.000000000 +0200
++++ b/maven-resolver-api/pom.xml	2026-11-03 22:40:55.429275429 +0100
+@@ -39,16 +39,6 @@
+   </properties>
+ 
+   <dependencies>
+-    <dependency>
+-      <groupId>org.junit.jupiter</groupId>
+-      <artifactId>junit-jupiter-api</artifactId>
+-      <scope>test</scope>
+-    </dependency>
+-    <dependency>
+-      <groupId>org.mockito</groupId>
+-      <artifactId>mockito-core</artifactId>
+-      <scope>test</scope>
+-    </dependency>
+   </dependencies>
+ 
+   <build>
+diff -ru /tmp/resolver-pristine/maven-resolver-2.0.24/maven-resolver-connector-basic/pom.xml /tmp/resolver-patched/maven-resolver-2.0.24/maven-resolver-connector-basic/pom.xml
+--- a/maven-resolver-connector-basic/pom.xml	2026-09-27 20:15:42.000000000 +0200
++++ b/maven-resolver-connector-basic/pom.xml	2026-11-03 22:40:55.429724166 +0100
+@@ -54,27 +54,6 @@
+       <groupId>org.slf4j</groupId>
+       <artifactId>slf4j-api</artifactId>
+     </dependency>
+-    <dependency>
+-      <groupId>org.slf4j</groupId>
+-      <artifactId>slf4j-simple</artifactId>
+-      <scope>test</scope>
+-    </dependency>
+-    <dependency>
+-      <groupId>com.google.inject</groupId>
+-      <artifactId>guice</artifactId>
+-      <classifier>classes</classifier>
+-      <scope>test</scope>
+-    </dependency>
+-    <dependency>
+-      <groupId>org.junit.jupiter</groupId>
+-      <artifactId>junit-jupiter-api</artifactId>
+-      <scope>test</scope>
+-    </dependency>
+-    <dependency>
+-      <groupId>org.apache.maven.resolver</groupId>
+-      <artifactId>maven-resolver-test-util</artifactId>
+-      <scope>test</scope>
+-    </dependency>
+   </dependencies>
+ 
+   <build>
+diff -ru /tmp/resolver-pristine/maven-resolver-2.0.24/maven-resolver-impl/pom.xml /tmp/resolver-patched/maven-resolver-2.0.24/maven-resolver-impl/pom.xml
+--- a/maven-resolver-impl/pom.xml	2026-09-27 20:15:42.000000000 +0200
++++ b/maven-resolver-impl/pom.xml	2026-11-03 22:40:55.429639604 +0100
+@@ -71,36 +71,6 @@
+       <groupId>org.slf4j</groupId>
+       <artifactId>slf4j-api</artifactId>
+     </dependency>
+-    <dependency>
+-      <groupId>org.slf4j</groupId>
+-      <artifactId>slf4j-simple</artifactId>
+-      <scope>test</scope>
+-    </dependency>
+-    <dependency>
+-      <groupId>org.junit.jupiter</groupId>
+-      <artifactId>junit-jupiter-api</artifactId>
+-      <scope>test</scope>
+-    </dependency>
+-    <dependency>
+-      <groupId>org.junit.jupiter</groupId>
+-      <artifactId>junit-jupiter-params</artifactId>
+-      <scope>test</scope>
+-    </dependency>
+-    <dependency>
+-      <groupId>org.mockito</groupId>
+-      <artifactId>mockito-core</artifactId>
+-      <scope>test</scope>
+-    </dependency>
+-    <dependency>
+-      <groupId>org.apache.maven.resolver</groupId>
+-      <artifactId>maven-resolver-test-util</artifactId>
+-      <scope>test</scope>
+-    </dependency>
+-    <dependency>
+-      <groupId>com.google.jimfs</groupId>
+-      <artifactId>jimfs</artifactId>
+-      <scope>test</scope>
+-    </dependency>
+   </dependencies>
+ 
+   <build>
+diff -ru /tmp/resolver-pristine/maven-resolver-2.0.24/maven-resolver-named-locks/pom.xml /tmp/resolver-patched/maven-resolver-2.0.24/maven-resolver-named-locks/pom.xml
+--- a/maven-resolver-named-locks/pom.xml	2026-09-27 20:15:42.000000000 +0200
++++ b/maven-resolver-named-locks/pom.xml	2026-11-03 22:40:55.429541423 +0100
+@@ -42,21 +42,6 @@
+       <scope>provided</scope>
+       <optional>true</optional>
+     </dependency>
+-    <dependency>
+-      <groupId>org.junit.jupiter</groupId>
+-      <artifactId>junit-jupiter-api</artifactId>
+-      <scope>test</scope>
+-    </dependency>
+-    <dependency>
+-      <groupId>org.mockito</groupId>
+-      <artifactId>mockito-core</artifactId>
+-      <scope>test</scope>
+-    </dependency>
+-    <dependency>
+-      <groupId>org.slf4j</groupId>
+-      <artifactId>slf4j-simple</artifactId>
+-      <scope>test</scope>
+-    </dependency>
+   </dependencies>
+ 
+   <build>
+diff -ru /tmp/resolver-pristine/maven-resolver-2.0.24/maven-resolver-spi/pom.xml /tmp/resolver-patched/maven-resolver-2.0.24/maven-resolver-spi/pom.xml
+--- a/maven-resolver-spi/pom.xml	2026-09-27 20:15:42.000000000 +0200
++++ b/maven-resolver-spi/pom.xml	2026-11-03 22:40:55.429375250 +0100
+@@ -47,11 +47,6 @@
+       <groupId>com.google.code.gson</groupId>
+       <artifactId>gson</artifactId>
+     </dependency>
+-    <dependency>
+-      <groupId>org.junit.jupiter</groupId>
+-      <artifactId>junit-jupiter-api</artifactId>
+-      <scope>test</scope>
+-    </dependency>
+   </dependencies>
+ 
+   <build>
+diff -ru /tmp/resolver-pristine/maven-resolver-2.0.24/maven-resolver-transport-apache/pom.xml /tmp/resolver-patched/maven-resolver-2.0.24/maven-resolver-transport-apache/pom.xml
+--- a/maven-resolver-transport-apache/pom.xml	2026-09-27 20:15:42.000000000 +0200
++++ b/maven-resolver-transport-apache/pom.xml	2026-11-03 22:40:55.429822877 +0100
+@@ -89,26 +89,6 @@
+       <optional>true</optional>
+     </dependency>
+ 
+-    <dependency>
+-      <groupId>org.junit.jupiter</groupId>
+-      <artifactId>junit-jupiter-api</artifactId>
+-      <scope>test</scope>
+-    </dependency>
+-    <dependency>
+-      <groupId>org.slf4j</groupId>
+-      <artifactId>slf4j-simple</artifactId>
+-      <scope>test</scope>
+-    </dependency>
+-    <dependency>
+-      <groupId>org.apache.maven.resolver</groupId>
+-      <artifactId>maven-resolver-test-util</artifactId>
+-      <scope>test</scope>
+-    </dependency>
+-    <dependency>
+-      <groupId>org.apache.maven.resolver</groupId>
+-      <artifactId>maven-resolver-test-http</artifactId>
+-      <scope>test</scope>
+-    </dependency>
+   </dependencies>
+ 
+   <build>
+diff -ru /tmp/resolver-pristine/maven-resolver-2.0.24/maven-resolver-transport-file/pom.xml /tmp/resolver-patched/maven-resolver-2.0.24/maven-resolver-transport-file/pom.xml
+--- a/maven-resolver-transport-file/pom.xml	2026-09-27 20:15:42.000000000 +0200
++++ b/maven-resolver-transport-file/pom.xml	2026-11-03 22:40:55.429907269 +0100
+@@ -51,31 +51,6 @@
+       <optional>true</optional>
+     </dependency>
+ 
+-    <dependency>
+-      <groupId>org.junit.jupiter</groupId>
+-      <artifactId>junit-jupiter-api</artifactId>
+-      <scope>test</scope>
+-    </dependency>
+-    <dependency>
+-      <groupId>org.junit.jupiter</groupId>
+-      <artifactId>junit-jupiter-params</artifactId>
+-      <scope>test</scope>
+-    </dependency>
+-    <dependency>
+-      <groupId>org.apache.maven.resolver</groupId>
+-      <artifactId>maven-resolver-test-util</artifactId>
+-      <scope>test</scope>
+-    </dependency>
+-    <dependency>
+-      <groupId>org.slf4j</groupId>
+-      <artifactId>slf4j-simple</artifactId>
+-      <scope>test</scope>
+-    </dependency>
+-    <dependency>
+-      <groupId>com.google.jimfs</groupId>
+-      <artifactId>jimfs</artifactId>
+-      <scope>test</scope>
+-    </dependency>
+   </dependencies>
+ 
+   <build>
+diff -ru /tmp/resolver-pristine/maven-resolver-2.0.24/maven-resolver-transport-wagon/pom.xml /tmp/resolver-patched/maven-resolver-2.0.24/maven-resolver-transport-wagon/pom.xml
+--- a/maven-resolver-transport-wagon/pom.xml	2026-09-27 20:15:42.000000000 +0200
++++ b/maven-resolver-transport-wagon/pom.xml	2026-11-03 22:40:55.430002230 +0100
+@@ -77,32 +77,6 @@
+       <optional>true</optional>
+     </dependency>
+ 
+-    <dependency>
+-      <groupId>org.junit.jupiter</groupId>
+-      <artifactId>junit-jupiter-api</artifactId>
+-      <scope>test</scope>
+-    </dependency>
+-    <dependency>
+-      <groupId>org.apache.maven.resolver</groupId>
+-      <artifactId>maven-resolver-test-util</artifactId>
+-      <scope>test</scope>
+-    </dependency>
+-    <dependency>
+-      <groupId>org.apache.maven.resolver</groupId>
+-      <artifactId>maven-resolver-impl</artifactId>
+-      <scope>test</scope>
+-    </dependency>
+-    <dependency>
+-      <groupId>org.codehaus.plexus</groupId>
+-      <artifactId>plexus-testing</artifactId>
+-      <version>2.2.0</version>
+-      <scope>test</scope>
+-    </dependency>
+-    <dependency>
+-      <groupId>org.slf4j</groupId>
+-      <artifactId>slf4j-simple</artifactId>
+-      <scope>test</scope>
+-    </dependency>
+   </dependencies>
+ 
+   <build>
+diff -ru /tmp/resolver-pristine/maven-resolver-2.0.24/maven-resolver-util/pom.xml /tmp/resolver-patched/maven-resolver-2.0.24/maven-resolver-util/pom.xml
+--- a/maven-resolver-util/pom.xml	2026-09-27 20:15:42.000000000 +0200
++++ b/maven-resolver-util/pom.xml	2026-11-03 22:40:55.429463702 +0100
+@@ -43,31 +43,6 @@
+       <groupId>org.apache.maven.resolver</groupId>
+       <artifactId>maven-resolver-api</artifactId>
+     </dependency>
+-    <dependency>
+-      <groupId>org.apache.maven.resolver</groupId>
+-      <artifactId>maven-resolver-test-util</artifactId>
+-      <scope>test</scope>
+-    </dependency>
+-    <dependency>
+-      <groupId>org.junit.jupiter</groupId>
+-      <artifactId>junit-jupiter-api</artifactId>
+-      <scope>test</scope>
+-    </dependency>
+-    <dependency>
+-      <groupId>org.junit.jupiter</groupId>
+-      <artifactId>junit-jupiter-params</artifactId>
+-      <scope>test</scope>
+-    </dependency>
+-    <dependency>
+-      <groupId>org.openjdk.jmh</groupId>
+-      <artifactId>jmh-core</artifactId>
+-      <scope>test</scope>
+-    </dependency>
+-    <dependency>
+-      <groupId>org.openjdk.jmh</groupId>
+-      <artifactId>jmh-generator-annprocess</artifactId>
+-      <scope>test</scope>
+-    </dependency>
+   </dependencies>
+ 
+   <build>
+diff -ru /tmp/resolver-pristine/maven-resolver-2.0.24/pom.xml /tmp/resolver-patched/maven-resolver-2.0.24/pom.xml
+--- a/pom.xml	2026-09-27 20:15:42.000000000 +0200
++++ b/pom.xml	2026-11-03 22:35:29.249532855 +0100
+@@ -44,32 +44,15 @@
+   </contributors>
+ 
+   <modules>
+-    <!-- NOTE: Be sure to update the bin assembly descriptor as well if the module list changes -->
+     <module>maven-resolver-api</module>
+     <module>maven-resolver-spi</module>
+     <module>maven-resolver-util</module>
+     <module>maven-resolver-named-locks</module>
+-    <module>maven-resolver-named-locks-hazelcast</module>
+-    <module>maven-resolver-named-locks-ipc</module>
+-    <module>maven-resolver-named-locks-redisson</module>
+     <module>maven-resolver-impl</module>
+-    <module>maven-resolver-test-util</module>
+-    <module>maven-resolver-test-http</module>
+     <module>maven-resolver-connector-basic</module>
+     <module>maven-resolver-transport-apache</module>
+-    <module>maven-resolver-transport-classpath</module>
+     <module>maven-resolver-transport-file</module>
+-    <module>maven-resolver-transport-jdk-parent</module>
+-    <module>maven-resolver-transport-jetty</module>
+-    <module>maven-resolver-transport-minio</module>
+-    <module>maven-resolver-transport-url</module>
+     <module>maven-resolver-transport-wagon</module>
+-    <module>maven-resolver-generator-gnupg</module>
+-    <module>maven-resolver-generator-sigstore</module>
+-    <module>maven-resolver-supplier-mvn3</module>
+-    <module>maven-resolver-supplier-mvn4</module>
+-    <module>maven-resolver-demos</module>
+-    <module>maven-resolver-tools</module>
+   </modules>
+ 
+   <scm>
+@@ -236,14 +219,6 @@
+       </dependency>
+ 
+       <dependency>
+-        <groupId>org.eclipse.jetty</groupId>
+-        <artifactId>jetty-bom</artifactId>
+-        <version>${version.jetty}</version>
+-        <type>pom</type>
+-        <scope>import</scope>
+-      </dependency>
+-
+-      <dependency>
+         <groupId>org.mockito</groupId>
+         <artifactId>mockito-core</artifactId>
+         <version>5.23.0</version>
+@@ -697,15 +672,6 @@
+             ]]></bnd>
+           </configuration>
+         </plugin>
+-        <plugin>
+-          <groupId>org.apache.maven.plugins</groupId>
+-          <artifactId>maven-jar-plugin</artifactId>
+-          <configuration>
+-            <archive>
+-              <manifestFile>${project.build.outputDirectory}/META-INF/MANIFEST.MF</manifestFile>
+-            </archive>
+-          </configuration>
+-        </plugin>
+       </plugins>
+     </pluginManagement>
+     <plugins>
+@@ -720,18 +686,6 @@
+         </configuration>
+       </plugin>
+       <plugin>
+-        <groupId>biz.aQute.bnd</groupId>
+-        <artifactId>bnd-maven-plugin</artifactId>
+-        <executions>
+-          <execution>
+-            <id>bnd-process</id>
+-            <goals>
+-              <goal>bnd-process</goal>
+-            </goals>
+-          </execution>
+-        </executions>
+-      </plugin>
+-      <plugin>
+         <groupId>org.eclipse.sisu</groupId>
+         <artifactId>sisu-maven-plugin</artifactId>
+       </plugin>

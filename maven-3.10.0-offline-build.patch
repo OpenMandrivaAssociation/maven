@@ -1,0 +1,147 @@
+--- a/.mvn/maven.config	2026-09-27 22:37:52.000000000 +0200
++++ b/.mvn/maven.config	2026-11-03 22:35:45.189058299 +0100
+@@ -1,5 +1 @@
+--P
+-use-apache-snapshots
+--P
+-use-apache-staging
+ 
+--- a/maven-core/pom.xml	2026-09-27 22:37:52.000000000 +0200
++++ b/maven-core/pom.xml	2026-11-03 22:35:45.189194501 +0100
+@@ -160,11 +160,6 @@
+       <scope>test</scope>
+     </dependency>
+     <dependency>
+-      <groupId>org.mockito</groupId>
+-      <artifactId>mockito-junit-jupiter</artifactId>
+-      <scope>test</scope>
+-    </dependency>
+-    <dependency>
+       <groupId>org.junit.jupiter</groupId>
+       <artifactId>junit-jupiter-api</artifactId>
+       <scope>test</scope>
+--- a/maven-jline/pom.xml	2026-09-27 22:37:52.000000000 +0200
++++ b/maven-jline/pom.xml	2026-11-03 22:35:45.189303442 +0100
+@@ -48,11 +48,6 @@
+       <artifactId>jline-terminal-jni</artifactId>
+     </dependency>
+     <dependency>
+-      <groupId>org.jline</groupId>
+-      <artifactId>jline-terminal-ffm</artifactId>
+-      <optional>true</optional>
+-    </dependency>
+-    <dependency>
+       <groupId>javax.inject</groupId>
+       <artifactId>javax.inject</artifactId>
+     </dependency>
+--- a/apache-maven/pom.xml	2026-09-27 22:37:52.000000000 +0200
++++ b/apache-maven/pom.xml	2026-11-03 22:35:45.189579016 +0100
+@@ -93,10 +93,6 @@
+       <artifactId>maven-slf4j-provider</artifactId>
+     </dependency>
+     <dependency>
+-      <groupId>org.jline</groupId>
+-      <artifactId>jline-terminal-ffm</artifactId>
+-    </dependency>
+-    <dependency>
+       <groupId>org.junit.jupiter</groupId>
+       <artifactId>junit-jupiter-api</artifactId>
+       <scope>test</scope>
+@@ -361,41 +357,5 @@
+         <finalName>${project.artifactId}</finalName>
+       </build>
+     </profile>
+-    <!-- Runs the bin/mvn path conversion test as part of the build. The test is
+-         a POSIX shell script driving the launcher, so it only applies to the
+-         platforms that use bin/mvn; Windows ships and runs bin/mvn.cmd. -->
+-    <profile>
+-      <id>shell-script-tests</id>
+-      <activation>
+-        <os>
+-          <family>unix</family>
+-        </os>
+-      </activation>
+-      <build>
+-        <plugins>
+-          <plugin>
+-            <groupId>org.codehaus.mojo</groupId>
+-            <artifactId>exec-maven-plugin</artifactId>
+-            <version>3.6.4</version>
+-            <executions>
+-              <execution>
+-                <id>test-mvn-path-conversion</id>
+-                <goals>
+-                  <goal>exec</goal>
+-                </goals>
+-                <phase>test</phase>
+-                <configuration>
+-                  <skip>${skipTests}</skip>
+-                  <executable>sh</executable>
+-                  <arguments>
+-                    <argument>${project.basedir}/src/test/scripts/test-mvn-path-conversion.sh</argument>
+-                  </arguments>
+-                </configuration>
+-              </execution>
+-            </executions>
+-          </plugin>
+-        </plugins>
+-      </build>
+-    </profile>
+   </profiles>
+ </project>
+--- a/maven-slf4j-provider/pom.xml	2026-09-27 22:37:52.000000000 +0200
++++ b/maven-slf4j-provider/pom.xml	2026-11-03 22:35:45.189711737 +0100
+@@ -61,53 +61,4 @@
+       <scope>test</scope>
+     </dependency>
+   </dependencies>
+-
+-  <build>
+-    <plugins>
+-      <plugin>
+-        <groupId>org.apache.maven.plugins</groupId>
+-        <artifactId>maven-dependency-plugin</artifactId>
+-        <configuration>
+-          <artifactItems>
+-            <artifactItem>
+-              <groupId>org.slf4j</groupId>
+-              <artifactId>slf4j-simple</artifactId>
+-              <type>jar</type>
+-              <classifier>sources</classifier>
+-              <overWrite>false</overWrite>
+-              <outputDirectory>${project.build.directory}/generated-sources/slf4j-simple</outputDirectory>
+-              <includes>org/slf4j/simple/*.java</includes>
+-              <excludes>org/slf4j/simple/SimpleServiceProvider*</excludes>
+-            </artifactItem>
+-          </artifactItems>
+-        </configuration>
+-        <executions>
+-          <execution>
+-            <id>unzip-slf4j-simple</id>
+-            <goals>
+-              <goal>unpack</goal>
+-            </goals>
+-          </execution>
+-        </executions>
+-      </plugin>
+-      <plugin>
+-        <groupId>org.codehaus.mojo</groupId>
+-        <artifactId>build-helper-maven-plugin</artifactId>
+-        <executions>
+-          <execution>
+-            <id>add-slf4j-simple</id>
+-            <goals>
+-              <goal>add-source</goal>
+-            </goals>
+-            <phase>generate-sources</phase>
+-            <configuration>
+-              <sources>
+-                <source>${project.build.directory}/generated-sources/slf4j-simple</source>
+-              </sources>
+-            </configuration>
+-          </execution>
+-        </executions>
+-      </plugin>
+-    </plugins>
+-  </build>
+ </project>
