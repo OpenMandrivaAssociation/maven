@@ -19,7 +19,7 @@
 Name:		maven
 Epoch:		1
 Version:	3.10.0
-Release:	1
+Release:	2
 Summary:	Java project management and project comprehension tool
 # maven itself is Apache-2.0
 # maven-slf4j-provider vendors SLF4J simple sources, which are MIT
@@ -35,6 +35,7 @@ Source3:	https://repo1.maven.org/maven2/org/slf4j/slf4j-simple/%{bundled_slf4j_v
 Source4:	https://archive.apache.org/dist/maven/resolver/maven-resolver-%{resolver_version}-source-release.zip
 Source5:	maven-resolver-%{resolver_version}-subset.patch
 Source6:	sisu-jdk27.py
+Source7:	toolchain-repo.py
 
 # logback is not installed; call it by reflection so the class is optional
 Patch0:		0002-Invoke-logback-via-reflection.patch
@@ -299,6 +300,17 @@ ln -s %{_sysconfdir}/maven/settings.xml %{buildroot}%{_datadir}/maven/conf/setti
 ln -s %{_sysconfdir}/maven/toolchains.xml %{buildroot}%{_datadir}/maven/conf/toolchains.xml
 ln -s %{_sysconfdir}/maven/logging %{buildroot}%{_datadir}/maven/conf/logging
 ln -s %{_sysconfdir}/m2.conf %{buildroot}%{_datadir}/maven/bin/m2.conf
+
+%if %{with bootstrap}
+# Default lifecycle plugins are not packages. Ship the bootstrap copies
+# for sysjar to link into the build repository, and make maven-core ask
+# for those versions. The jars are not indexed.
+jpb=%{_builddir}/jpb-root/usr/share/javapackages-bootstrap
+python %{SOURCE7} \
+	"$jpb" \
+	%{buildroot}%{_datadir}/maven/lib/maven-core-%{version}.jar \
+	%{buildroot}%{_datadir}/maven/toolchain
+%endif
 
 install -d %{buildroot}%{_bindir}
 ln -s ../share/maven/bin/mvn %{buildroot}%{_bindir}/mvn
