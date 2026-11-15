@@ -13,8 +13,9 @@
 # unpatched jar. A command-line definition wins.
 %{!?_sysjar_mvn:%global _sysjar_mvn %{_builddir}/jpb-root/mvn-jdk27}
 # Resolver 2.0.24 is not in the bootstrap set (that set has 2.0.9).
-# sisu-root is the 1.1.2 build of inject and plexus. A real package at
-# 1.1.2 outranks the installed 0.9.0.M3.MBI record for this build only.
+# sisu-root is the 1.1.2 build of inject and plexus. sysjar ranks it
+# above the installed 0.9.0.M3.MBI record. XMvn does not, until the
+# exact-version metadata below is written.
 %{!?sysjar_extra:%global sysjar_extra --root / --root %{_builddir}/resolver-root --root %{_builddir}/sisu-root}
 # --bootstrap would also read the installed tree. An equal version loaded
 # later replaces this patched copy, so name only the private root.
@@ -414,6 +415,87 @@ export XDG_DATA_DIRS="$xdg"
 exec "$jpb/bin/mvn" "\$@"
 EOF
 chmod 755 %{_builddir}/jpb-root/mvn-jdk27
+# sysjar stamps inject and plexus to 1.1.2. XMvn ignores that root.
+# The bootstrap record has no compatVersions, so it is indexed only as
+# SYSTEM, and a request for 1.1.2 opens the 0.9.0.M3.MBI jar. The
+# embedder then cannot see setVisibilityPredicateSupplierTransformer.
+# An exact compatVersions entry is the file XMvn returns. The plugin
+# stays on the SYSTEM jar: this build does not ship sisu-maven-plugin
+# 1.1.2, and the rewrite stamps that plugin back to 0.9.0.M3.MBI.
+python - "$jpb/maven-metadata/sisu-%{sisu_version}.xml" "%{_builddir}/sisu-root" "%{sisu_version}" << 'PY'
+import json, sys, zipfile
+from pathlib import Path
+import xml.etree.ElementTree as ET
+
+dest = Path(sys.argv[1])
+buildroot = Path(sys.argv[2])
+want = sys.argv[3]
+index = buildroot / "usr/share/sysjar/index/org.eclipse.sisu"
+meta = ET.Element("metadata")
+arts = ET.SubElement(meta, "artifacts")
+checked = []
+
+def add_file(data, extension, stored):
+    if not stored:
+        return
+    path = buildroot / stored.lstrip("/")
+    if not path.is_file():
+        raise SystemExit(f"missing {path}")
+    node = ET.SubElement(arts, "artifact")
+    ET.SubElement(node, "groupId").text = data["groupId"]
+    ET.SubElement(node, "artifactId").text = data["artifactId"]
+    if extension != "jar":
+        ET.SubElement(node, "extension").text = extension
+    if data.get("classifier"):
+        ET.SubElement(node, "classifier").text = data["classifier"]
+    ET.SubElement(node, "version").text = data["version"]
+    ET.SubElement(node, "path").text = str(path)
+    compat = ET.SubElement(node, "compatVersions")
+    ET.SubElement(compat, "version").text = data["version"]
+    if extension == "jar":
+        checked.append((data["artifactId"], path))
+        return
+    deps = ET.SubElement(node, "dependencies")
+    for dep in data.get("dependencies") or []:
+        if dep.get("optional") or dep.get("scope") not in (None, "", "compile"):
+            continue
+        item = ET.SubElement(deps, "dependency")
+        ET.SubElement(item, "groupId").text = dep["groupId"]
+        ET.SubElement(item, "artifactId").text = dep["artifactId"]
+        if dep.get("groupId") == "org.eclipse.sisu":
+            ET.SubElement(item, "requestedVersion").text = data["version"]
+            ET.SubElement(item, "resolvedVersion").text = data["version"]
+
+if not index.is_dir():
+    raise SystemExit(f"no sisu index under {index}")
+for record in sorted(index.glob("*.sysjar")):
+    data = json.loads(record.read_text())
+    if data.get("version") != want:
+        raise SystemExit(f"{record.name} version is {data.get('version')}, want {want}")
+    extension = data.get("extension") or "jar"
+    if extension == "pom":
+        add_file(data, "pom", data.get("pom") or data.get("path") or "")
+    else:
+        add_file(data, "jar", data.get("jar") or data.get("path") or "")
+        if data.get("pom"):
+            add_file(data, "pom", data["pom"])
+
+names = {name for name, _path in checked}
+if names != {"org.eclipse.sisu.inject", "org.eclipse.sisu.plexus"}:
+    raise SystemExit(f"sisu metadata artifacts are {sorted(names)}")
+for name, path in checked:
+    if name != "org.eclipse.sisu.plexus":
+        continue
+    with zipfile.ZipFile(path) as archive:
+        blob = archive.read("org/codehaus/plexus/ContainerConfiguration.class")
+    if b"setVisibilityPredicateSupplierTransformer" not in blob:
+        raise SystemExit(f"{path} has no setVisibilityPredicateSupplierTransformer")
+if not len(arts):
+    raise SystemExit(f"no sisu artifacts under {index}")
+dest.parent.mkdir(parents=True, exist_ok=True)
+ET.ElementTree(meta).write(dest, encoding="utf-8", xml_declaration=True)
+print("XMvn sisu %s: %s" % (want, ", ".join("%s -> %s" % pair for pair in checked)))
+PY
 (
 	cd %{_builddir}/maven-resolver-%{resolver_version}
 	%__sysjar_use_java_home
