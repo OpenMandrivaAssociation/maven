@@ -2,6 +2,9 @@
 
 %global resolver_version 2.0.24
 %global bundled_slf4j_version 2.0.17
+# 3.10.1 calls ContainerConfiguration.setVisibilityPredicateSupplierTransformer
+# (Sisu 1.1.1+). The indexed system jar is still 0.9.0.M3.MBI.
+%global sisu_version 1.1.2
 %global sysjar_drops --drop org.codehaus.mojo:animal-sniffer-maven-plugin --drop org.apache.rat:apache-rat-plugin --drop org.apache.maven.plugins:maven-enforcer-plugin --drop org.codehaus.mojo:buildnumber-maven-plugin --drop ch.qos.logback:logback-classic --drop org.powermock:powermock-reflect --drop biz.aQute.bnd:bnd-maven-plugin --drop org.eclipse.jetty:jetty-bom
 %if %{with bootstrap}
 %global sysjar_bootstrap 1
@@ -10,7 +13,9 @@
 # unpatched jar. A command-line definition wins.
 %{!?_sysjar_mvn:%global _sysjar_mvn %{_builddir}/jpb-root/mvn-jdk27}
 # Resolver 2.0.24 is not in the bootstrap set (that set has 2.0.9).
-%{!?sysjar_extra:%global sysjar_extra --root / --root %{_builddir}/resolver-root}
+# sisu-root is the 1.1.2 build of inject and plexus. A real package at
+# 1.1.2 outranks the installed 0.9.0.M3.MBI record for this build only.
+%{!?sysjar_extra:%global sysjar_extra --root / --root %{_builddir}/resolver-root --root %{_builddir}/sisu-root}
 # --bootstrap would also read the installed tree. An equal version loaded
 # later replaces this patched copy, so name only the private root.
 %global __sysjar_mode --bootstrap-root %{_builddir}/jpb-root %{?sysjar_extra} %{?sysjar_drops}
@@ -23,7 +28,8 @@ Release:	1
 Summary:	Java project management and project comprehension tool
 # maven itself is Apache-2.0
 # maven-slf4j-provider vendors SLF4J simple sources, which are MIT
-License:	Apache-2.0 AND MIT
+# lib/ ships Sisu 1.1.2 classes under the frozen 0.9.0.M3.MBI names
+License:	Apache-2.0 AND MIT AND EPL-2.0
 Group:		Development/Java
 URL:		https://maven.apache.org/
 BuildArch:	noarch
@@ -36,6 +42,7 @@ Source4:	https://archive.apache.org/dist/maven/resolver/maven-resolver-%{resolve
 Source5:	maven-resolver-%{resolver_version}-subset.patch
 Source6:	sisu-jdk27.py
 Source7:	toolchain-repo.py
+Source8:	https://github.com/eclipse-sisu/sisu-project/archive/refs/tags/releases/%{sisu_version}.tar.gz#/sisu-project-%{sisu_version}.tar.gz
 
 # logback is not installed; call it by reflection so the class is optional
 Patch0:		0002-Invoke-logback-via-reflection.patch
@@ -48,6 +55,22 @@ BuildRequires:	sysjar
 # 3.10.1 embedder compiles against jakarta.annotation-api. The bootstrap
 # tree only has the old javax.annotation coordinate.
 BuildRequires:	mvn(jakarta.annotation:jakarta.annotation-api) = 1.3.5
+# Private Sisu 1.1.2 compile. Same jars eclipse-sisu builds against.
+BuildRequires:	java-current-devel
+BuildRequires:	mvn(com.google.inject:guice)
+BuildRequires:	mvn(com.google.inject.extensions:guice-servlet)
+BuildRequires:	mvn(com.google.guava:guava)
+BuildRequires:	mvn(com.google.guava:failureaccess)
+BuildRequires:	mvn(javax.inject:javax.inject)
+BuildRequires:	mvn(org.slf4j:slf4j-api) >= 2.0.17
+BuildRequires:	mvn(javax.annotation:javax.annotation-api)
+BuildRequires:	mvn(javax.enterprise:cdi-api)
+BuildRequires:	mvn(javax.servlet:javax.servlet-api)
+BuildRequires:	mvn(org.osgi:osgi.core)
+BuildRequires:	mvn(org.codehaus.plexus:plexus-utils)
+BuildRequires:	mvn(org.codehaus.plexus:plexus-classworlds) >= 2.7.0
+BuildRequires:	mvn(org.codehaus.plexus:plexus-component-annotations)
+BuildRequires:	mvn(org.ow2.asm:asm)
 BuildSystem:	maven
 BuildOption:	-Dproject.build.sourceEncoding=UTF-8
 
@@ -108,6 +131,8 @@ rm -rf \
 	%{_builddir}/maven-resolver-%{resolver_version}/maven-resolver-transport-minio \
 	%{_builddir}/maven-resolver-%{resolver_version}/maven-resolver-transport-url
 patch -d %{_builddir}/maven-resolver-%{resolver_version} -p1 < %{SOURCE5}
+tar -C %{_builddir} -xzf %{SOURCE8}
+cp -a %{_builddir}/sisu-project-releases-%{sisu_version}/LICENSE.txt sisu-EPL-2.0.txt
 %endif
 
 # Bootstrap jars are not separate packages. Do not emit them as BuildRequires.
@@ -120,6 +145,176 @@ patch -d %{_builddir}/maven-resolver-%{resolver_version} -p1 < %{SOURCE5}
 
 %build -p
 %if %{with bootstrap}
+# Compile Sisu %{sisu_version} before the resolver build. The private root
+# has to exist before sysjar reads it. A default method on the old interface
+# throws UnsupportedOperationException, so both the interface and
+# DefaultContainerConfiguration have to be this version.
+sisu=%{_builddir}/sisu-project-releases-%{sisu_version}
+work=%{_builddir}/sisu-classes
+test -d "$sisu/org.eclipse.sisu.inject/src/main/java"
+find "$sisu" \( -name '*.jar' -o -name '*.class' \) -delete
+rm -rf "$work"
+install -d "$work"
+sisu_java_home=${JAVA_HOME-}
+sisu_path=$PATH
+export JAVA_HOME=%{_jvmdir}/java-openjdk
+export PATH="$JAVA_HOME/bin:$PATH"
+CP="%{_javadir}/google-guice.jar"
+CP="$CP:%{_javadir}/guice/guice-servlet.jar"
+CP="$CP:%{_javadir}/atinject.jar"
+CP="$CP:%{_javadir}/osgi-core.jar"
+CP="$CP:%{_javadir}/slf4j-api.jar"
+CP="$CP:%{_javadir}/jakarta-annotations/jakarta.annotation-api.jar"
+CP="$CP:%{_javadir}/cdi-api.jar"
+CP="$CP:%{_javadir}/javax.servlet-4.0.1.jar"
+CP="$CP:%{_javadir}/plexus-utils.jar"
+CP="$CP:%{_javadir}/plexus-classworlds-2.7.0.jar"
+CP="$CP:%{_javadir}/plexus-containers/plexus-component-annotations.jar"
+CP="$CP:%{_javadir}/guava.jar"
+CP="$CP:%{_javadir}/failureaccess.jar"
+CP="$CP:%{_javadir}/asm.jar"
+for jar in ${CP//:/ }; do
+	test -s "$jar"
+done
+compile_mod() {
+	src=$1
+	out=$2
+	expect=$3
+	extra=$4
+	mkdir -p "$out"
+	find "$src" -name '*.java' \
+		! -name 'InjectedTest.java' \
+		! -name 'InjectedTestCase.java' \
+		! -name 'PlexusTestCase.java' > "$out.list"
+	test "$(wc -l < "$out.list")" -eq "$expect"
+	javac --release 8 -encoding UTF-8 -Xlint:-options -proc:none \
+		-cp "$CP:$extra" -d "$out" @"$out.list"
+}
+compile_mod "$sisu/org.eclipse.sisu.inject/src/main/java" "$work/inject" 147 ""
+compile_mod "$sisu/org.eclipse.sisu.plexus/src/main/java" "$work/plexus" 136 "$work/inject"
+javap -v -classpath "$work/plexus" org.codehaus.plexus.DefaultContainerConfiguration | grep -F -q 'major version: 52'
+javap -classpath "$work/plexus" org.codehaus.plexus.DefaultContainerConfiguration | grep -F -q setVisibilityPredicateSupplierTransformer
+install -d "$work/plexus/META-INF/sisu"
+printf '%%s\n' \
+	org.codehaus.plexus.component.configurator.BasicComponentConfigurator \
+	org.codehaus.plexus.component.configurator.MapOrientedComponentConfigurator \
+	> "$work/plexus/META-INF/sisu/javax.inject.Named"
+jar_mod() {
+	artifact=$1
+	classes=$2
+	printf 'Manifest-Version: 1.0\nAutomatic-Module-Name: %%s\n\n' "$artifact" > "$work/$artifact.mf"
+	jar cfm "$work/$artifact.jar" "$work/$artifact.mf" -C "$classes" .
+}
+jar_mod org.eclipse.sisu.inject "$work/inject"
+jar_mod org.eclipse.sisu.plexus "$work/plexus"
+cat > "$work/org.eclipse.sisu.inject.pom" << 'EOF'
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>org.eclipse.sisu</groupId>
+  <artifactId>org.eclipse.sisu.inject</artifactId>
+  <version>1.1.2</version>
+  <name>Sisu Inject</name>
+  <licenses>
+    <license>
+      <name>EPL-2.0</name>
+      <url>https://www.eclipse.org/legal/epl-2.0/</url>
+    </license>
+  </licenses>
+  <dependencies>
+    <dependency>
+      <groupId>com.google.inject</groupId>
+      <artifactId>guice</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>javax.inject</groupId>
+      <artifactId>javax.inject</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-api</artifactId>
+    </dependency>
+  </dependencies>
+</project>
+EOF
+cat > "$work/org.eclipse.sisu.plexus.pom" << 'EOF'
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>org.eclipse.sisu</groupId>
+  <artifactId>org.eclipse.sisu.plexus</artifactId>
+  <version>1.1.2</version>
+  <name>Sisu Plexus</name>
+  <licenses>
+    <license>
+      <name>EPL-2.0</name>
+      <url>https://www.eclipse.org/legal/epl-2.0/</url>
+    </license>
+  </licenses>
+  <dependencies>
+    <dependency>
+      <groupId>org.eclipse.sisu</groupId>
+      <artifactId>org.eclipse.sisu.inject</artifactId>
+      <version>1.1.2</version>
+    </dependency>
+    <dependency>
+      <groupId>com.google.inject</groupId>
+      <artifactId>guice</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>javax.inject</groupId>
+      <artifactId>javax.inject</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.codehaus.plexus</groupId>
+      <artifactId>plexus-classworlds</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.codehaus.plexus</groupId>
+      <artifactId>plexus-component-annotations</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.codehaus.plexus</groupId>
+      <artifactId>plexus-utils</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-api</artifactId>
+    </dependency>
+  </dependencies>
+</project>
+EOF
+rm -rf %{_builddir}/sisu-root
+# file-name keeps the buildroot path off the unversioned /usr/share/java
+# name. resolve prefers an absolute path that already exists on the system.
+sysjar install --buildroot %{_builddir}/sisu-root \
+	--file-name "org.eclipse.sisu.inject-%{sisu_version}" \
+	--artifact "$work/org.eclipse.sisu.inject.pom:$work/org.eclipse.sisu.inject.jar"
+sysjar install --buildroot %{_builddir}/sisu-root \
+	--file-name "org.eclipse.sisu.plexus-%{sisu_version}" \
+	--artifact "$work/org.eclipse.sisu.plexus.pom:$work/org.eclipse.sisu.plexus.jar"
+sisu_plexus=$(sysjar resolve -q --root / --root %{_builddir}/sisu-root org.eclipse.sisu:org.eclipse.sisu.plexus:1.1.2)
+case $sisu_plexus in
+%{_builddir}/sisu-root/*) ;;
+*) echo "sisu 1.1.2 resolved to $sisu_plexus" >&2; exit 1 ;;
+esac
+python - "%{_builddir}/sisu-root" << 'PY'
+import json
+import sys
+from pathlib import Path
+
+root = Path(sys.argv[1]) / "usr/share/sysjar/index/org.eclipse.sisu"
+for name in ("org.eclipse.sisu.inject.sysjar", "org.eclipse.sisu.plexus.sysjar"):
+    data = json.loads((root / name).read_text())
+    if data.get("version") != "1.1.2":
+        raise SystemExit(f"{name} version is {data.get('version')}")
+PY
+export PATH=$sisu_path
+if [ -n "$sisu_java_home" ]; then
+	export JAVA_HOME=$sisu_java_home
+else
+	unset JAVA_HOME
+fi
 # sisu-maven-plugin depends on org.eclipse.sisu.inject, and that
 # dependency is the ClassReader which scans JDK classes. Patch the copy
 # the metadata points at. The installed tree is not writable here.
@@ -292,6 +487,28 @@ install -d %{buildroot}%{_datadir}
 tar -C %{buildroot}%{_datadir} -xzf apache-maven/target/apache-maven-%{version}-bin.tar.gz
 mv %{buildroot}%{_datadir}/apache-maven-%{version} %{buildroot}%{_datadir}/maven
 rm -f %{buildroot}%{_datadir}/maven/bin/*.cmd
+# maven-components indexes these frozen names. The bytes are Sisu %{sisu_version}.
+# A second copy under the real version would put the same classes on the classpath twice.
+sisu_lib=%{buildroot}%{_datadir}/maven/lib
+for art in org.eclipse.sisu.inject org.eclipse.sisu.plexus; do
+	src="$sisu_lib/${art}-%{sisu_version}.jar"
+	dest="$sisu_lib/${art}-0.9.0.M3.MBI.jar"
+	if [ ! -s "$src" ]; then
+		echo "expected $src" >&2
+		ls -l "$sisu_lib"/org.eclipse.sisu.* >&2 || true
+		exit 1
+	fi
+	rm -f "$dest"
+	mv -f "$src" "$dest"
+done
+unexpected=$(find "$sisu_lib" -name 'org.eclipse.sisu.*.jar' \
+	! -name 'org.eclipse.sisu.inject-0.9.0.M3.MBI.jar' \
+	! -name 'org.eclipse.sisu.plexus-0.9.0.M3.MBI.jar')
+if [ -n "$unexpected" ]; then
+	echo "unexpected sisu jar in maven lib" >&2
+	printf '%%s\n' "$unexpected" >&2
+	exit 1
+fi
 
 install -d %{buildroot}%{_sysconfdir}/maven/logging
 mv %{buildroot}%{_datadir}/maven/conf/settings.xml %{buildroot}%{_sysconfdir}/maven/settings.xml
@@ -326,7 +543,7 @@ install -p -m 644 %{SOURCE2} %{buildroot}%{_mandir}/man1/mvn.1
 ln -s mvn.1 %{buildroot}%{_mandir}/man1/mvnDebug.1
 
 %files
-%license LICENSE NOTICE
+%license LICENSE NOTICE sisu-EPL-2.0.txt
 %doc README.md
 %{_datadir}/maven
 %dir %{_sysconfdir}/maven
