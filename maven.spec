@@ -18,8 +18,8 @@
 
 Name:		maven
 Epoch:		1
-Version:	3.10.0
-Release:	2
+Version:	3.10.1
+Release:	1
 Summary:	Java project management and project comprehension tool
 # maven itself is Apache-2.0
 # maven-slf4j-provider vendors SLF4J simple sources, which are MIT
@@ -39,8 +39,8 @@ Source7:	toolchain-repo.py
 
 # logback is not installed; call it by reflection so the class is optional
 Patch0:		0002-Invoke-logback-via-reflection.patch
-# Offline build: no staging repos, no FFM terminal, no sources-classifier unpack
-Patch1:		maven-3.10.0-offline-build.patch
+# Offline build: no staging repos, no launcher shell tests, no sources-classifier unpack
+Patch1:		maven-3.10.1-offline-build.patch
 
 BuildRequires:	python
 BuildRequires:	unzip

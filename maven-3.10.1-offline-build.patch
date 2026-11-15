@@ -1,13 +1,13 @@
---- a/.mvn/maven.config	2026-09-27 22:37:52.000000000 +0200
-+++ b/.mvn/maven.config	2026-11-03 22:35:45.189058299 +0100
+--- a/.mvn/maven.config
++++ b/.mvn/maven.config
 @@ -1,5 +1 @@
 --P
 -use-apache-snapshots
 --P
 -use-apache-staging
  
---- a/maven-core/pom.xml	2026-09-27 22:37:52.000000000 +0200
-+++ b/maven-core/pom.xml	2026-11-03 22:35:45.189194501 +0100
+--- a/maven-core/pom.xml
++++ b/maven-core/pom.xml
 @@ -160,11 +160,6 @@
        <scope>test</scope>
      </dependency>
@@ -20,34 +20,9 @@
        <groupId>org.junit.jupiter</groupId>
        <artifactId>junit-jupiter-api</artifactId>
        <scope>test</scope>
---- a/maven-jline/pom.xml	2026-09-27 22:37:52.000000000 +0200
-+++ b/maven-jline/pom.xml	2026-11-03 22:35:45.189303442 +0100
-@@ -48,11 +48,6 @@
-       <artifactId>jline-terminal-jni</artifactId>
-     </dependency>
-     <dependency>
--      <groupId>org.jline</groupId>
--      <artifactId>jline-terminal-ffm</artifactId>
--      <optional>true</optional>
--    </dependency>
--    <dependency>
-       <groupId>javax.inject</groupId>
-       <artifactId>javax.inject</artifactId>
-     </dependency>
---- a/apache-maven/pom.xml	2026-09-27 22:37:52.000000000 +0200
-+++ b/apache-maven/pom.xml	2026-11-03 22:35:45.189579016 +0100
-@@ -93,10 +93,6 @@
-       <artifactId>maven-slf4j-provider</artifactId>
-     </dependency>
-     <dependency>
--      <groupId>org.jline</groupId>
--      <artifactId>jline-terminal-ffm</artifactId>
--    </dependency>
--    <dependency>
-       <groupId>org.junit.jupiter</groupId>
-       <artifactId>junit-jupiter-api</artifactId>
-       <scope>test</scope>
-@@ -361,41 +357,5 @@
+--- a/apache-maven/pom.xml
++++ b/apache-maven/pom.xml
+@@ -343,55 +343,5 @@
          <finalName>${project.artifactId}</finalName>
        </build>
      </profile>
@@ -82,6 +57,20 @@
 -                  </arguments>
 -                </configuration>
 -              </execution>
+-              <execution>
+-                <id>test-mvn-args</id>
+-                <goals>
+-                  <goal>exec</goal>
+-                </goals>
+-                <phase>test</phase>
+-                <configuration>
+-                  <skip>${skipTests}</skip>
+-                  <executable>sh</executable>
+-                  <arguments>
+-                    <argument>${project.basedir}/src/test/scripts/test-mvn-args.sh</argument>
+-                  </arguments>
+-                </configuration>
+-              </execution>
 -            </executions>
 -          </plugin>
 -        </plugins>
@@ -89,13 +78,12 @@
 -    </profile>
    </profiles>
  </project>
---- a/maven-slf4j-provider/pom.xml	2026-09-27 22:37:52.000000000 +0200
-+++ b/maven-slf4j-provider/pom.xml	2026-11-03 22:35:45.189711737 +0100
-@@ -61,53 +61,4 @@
-       <scope>test</scope>
+--- a/maven-slf4j-provider/pom.xml
++++ b/maven-slf4j-provider/pom.xml
+@@ -62,52 +62,4 @@
      </dependency>
    </dependencies>
--
+ 
 -  <build>
 -    <plugins>
 -      <plugin>
