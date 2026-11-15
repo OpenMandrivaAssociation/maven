@@ -45,6 +45,9 @@ Patch1:		maven-3.10.1-offline-build.patch
 BuildRequires:	python
 BuildRequires:	unzip
 BuildRequires:	sysjar
+# 3.10.1 embedder compiles against jakarta.annotation-api. The bootstrap
+# tree only has the old javax.annotation coordinate.
+BuildRequires:	mvn(jakarta.annotation:jakarta.annotation-api) = 1.3.5
 BuildSystem:	maven
 BuildOption:	-Dproject.build.sourceEncoding=UTF-8
 
